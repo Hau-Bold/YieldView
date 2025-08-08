@@ -1,0 +1,37 @@
+# Angular frontend (YieldView.web)
+WebUI/YieldView.web/dist/
+WebUI/YieldView.web/tmp/
+WebUI/YieldView.web/out-tsc/
+WebUI/YieldView.web/bazel-out/
+WebUI/YieldView.web/node_modules/
+WebUI/YieldView.web/npm-debug.log*
+WebUI/YieldView.web/yarn-error.log*
+WebUI/YieldView.web/.angular/cache/
+WebUI/YieldView.web/.sass-cache/
+WebUI/YieldView.web/coverage/
+WebUI/YieldView.web/.vscode/*
+!WebUI/YieldView.web/.vscode/settings.json
+!WebUI/YieldView.web/.vscode/tasks.json
+!WebUI/YieldView.web/.vscode/launch.json
+!WebUI/YieldView.web/.vscode/extensions.json
+WebUI/YieldView.web/.history/*
+
+# C# backend
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.sln.docstates
+
+# NuGet packages
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+project.lock.json
+project.fragment.lock.json
+
+# System files
+.DS_Store
+Thumbs.db
