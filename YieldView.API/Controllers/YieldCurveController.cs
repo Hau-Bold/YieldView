@@ -24,7 +24,10 @@ namespace YieldView.API.Controllers
         public async Task<ActionResult<IEnumerable<YieldCurvePoint>>> GetYieldCurve(string country, int year)
         {
             var points = await _treasuryXmlService.DownloadAndParseYieldCurveAsync(country,year);
-            return Ok(points);
+
+      _context.YieldCurvePoints.AddRange(points);
+
+      return Ok(points);
         }
     }
 }

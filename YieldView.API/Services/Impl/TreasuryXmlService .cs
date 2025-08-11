@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using System.Globalization;
 using System.Xml.Linq;
 using YieldView.API.Configurations;
@@ -29,44 +29,51 @@ namespace YieldView.API.Services.Impl
             var xml = await _httpClient.GetStringAsync(fullUrl);
 
             var doc = XDocument.Parse(xml);
-            XNamespace d = "http://schemas.microsoft.com/ado/2007/08/dataservices";
-            XNamespace m = "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata";
 
-            var entries = new List<YieldCurvePoint>();
+      XNamespace atom = "http://www.w3.org/2005/Atom";
+      XNamespace d = "http://schemas.microsoft.com/ado/2007/08/dataservices";
+      XNamespace m = "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata";
 
-            foreach (var entry in doc.Descendants("entry"))
+      var entries = doc.Descendants(atom + "entry");
+
+      //XNamespace d = "http://schemas.microsoft.com/ado/2007/08/dataservices";
+      //      XNamespace m = "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata";
+
+            var entries1 = new List<YieldCurvePoint>();
+
+      foreach (var entry in entries)
+      {
+        var props = entry.Descendants(m + "properties").FirstOrDefault();
+        if (props == null) continue;
+
+        var dateStr = props.Element(d + "NEW_DATE")?.Value;
+        if (!DateTime.TryParse(dateStr, out var date)) continue;
+
+        foreach (var element in props.Elements())
+        {
+          var localName = element.Name.LocalName;
+          if (!localName.StartsWith("BC_") || localName == "BC_30YEARDISPLAY")
+            continue;
+
+          var maturity = localName.Replace("BC_", "")
+                                  .Replace("YEAR", "Y")
+                                  .Replace("MONTH", "M");
+
+          if (double.TryParse(element.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var yield))
+          {
+            entries1.Add(new YieldCurvePoint
             {
-                var props = entry.Descendants(m + "properties").FirstOrDefault();
-                if (props == null) continue;
+              Country = "US",
+              Date = date,
+              Maturity = maturity,
+              Yield = yield
+            });
+          }
+        }
+      }
 
-                var dateStr = props.Element(d + "NEW_DATE")?.Value;
-                if (!DateTime.TryParse(dateStr, out var date)) continue;
 
-                // Loop through all children in <m:properties>
-                foreach (var element in props.Elements())
-                {
-                    var localName = element.Name.LocalName;
-                    if (!localName.StartsWith("BC_") || localName == "BC_30YEARDISPLAY")
-                        continue;
-
-                    var maturity = localName.Replace("BC_", "")   
-                                            .Replace("YEAR", "Y")  
-                                            .Replace("MONTH", "M");
-
-                    if (double.TryParse(element.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var yield))
-                    {
-                        entries.Add(new YieldCurvePoint
-                        {
-                            Date = date,
-                            Country = country.ToUpper(),
-                            Maturity = maturity,
-                            Yield = yield
-                        });
-                    }
-                }
-            }
-
-            return entries;
+      return entries1;
         }
     }
 }
