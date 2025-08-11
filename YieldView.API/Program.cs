@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
-using YieldView.API.Services.Contract;
 using YieldView.API.Services.Impl;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,22 +15,25 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<YieldDbContext>(options
     => options.UseInMemoryDatabase("YieldDb"));
 
-builder.Services.Configure<YieldCurveSourceConfig>(
+builder.Services.Configure<YieldCurveSourcesConfig>(
     builder.Configuration.GetSection("YieldCurveSources"));
 
-builder.Services.AddHttpClient<ITreasuryXmlService, TreasuryXmlService>();
-
+builder.Services.AddHttpClient<TreasuryXmlService>();
+builder.Services.AddHostedService<TreasuryXmlService>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+  app.UseSwagger();
+  app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+
+//avoid cross origin blocked by browser!
+app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
 app.UseAuthorization();
 

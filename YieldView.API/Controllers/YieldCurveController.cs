@@ -1,33 +1,38 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using YieldView.API.Configurations;
+using Microsoft.EntityFrameworkCore;
 using YieldView.API.Data;
 using YieldView.API.Models;
-using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class YieldCurveController : ControllerBase
+  [Route("api/[controller]")]
+  [ApiController]
+  public class YieldCurveController : ControllerBase
     {
         private readonly YieldDbContext _context;
-        private readonly ITreasuryXmlService _treasuryXmlService;
 
-        public YieldCurveController(YieldDbContext context,ITreasuryXmlService treasuryCsvService)
+        public YieldCurveController(YieldDbContext context)
         {
             _context = context;
-            _treasuryXmlService = treasuryCsvService;
         }
 
-        [HttpGet("{country}/{year}")]
-        public async Task<ActionResult<IEnumerable<YieldCurvePoint>>> GetYieldCurve(string country, int year)
-        {
-            var points = await _treasuryXmlService.DownloadAndParseYieldCurveAsync(country,year);
+    [HttpGet("{country}/{date}")]
+    public async Task<ActionResult<IEnumerable<YieldCurvePoint>>> GetYieldCurve(string country, DateTime date)
+    {
 
-      _context.YieldCurvePoints.AddRange(points);
+      var startDate = date.Date; 
+      var endDate = startDate.AddDays(1); 
+
+      var points = await _context.YieldCurvePoints
+          .Where(p => p.Country.ToUpper() == country.ToUpper()
+                      && p.Date >= startDate
+                      && p.Date < endDate)
+          .ToListAsync();
+
+      if (points == null || points.Count == 0)
+        return NotFound($"No data for {country} at {date:yyyy-MM-dd}.");
 
       return Ok(points);
-        }
     }
+  }
 }

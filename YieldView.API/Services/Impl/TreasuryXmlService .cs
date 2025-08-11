@@ -1,79 +1,98 @@
-using Microsoft.Extensions.Options;
 using System.Globalization;
 using System.Xml.Linq;
+using Microsoft.Extensions.Options;
 using YieldView.API.Configurations;
+using YieldView.API.Data;
 using YieldView.API.Models;
-using YieldView.API.Services.Contract;
 
-namespace YieldView.API.Services.Impl
+namespace YieldView.API.Services.Impl;
+public class TreasuryXmlService : IHostedService
 {
-    public class TreasuryXmlService : ITreasuryXmlService
-    {
-        private readonly HttpClient _httpClient;
-        private readonly Dictionary<string, string> _sourceUrls;
+  private readonly HttpClient _httpClient;
+  private readonly YieldCurveSourcesConfig _sources;
+  private readonly IServiceScopeFactory _scopeFactory;
+  
+  public TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory)
+  {
+    _httpClient = httpClient;
+    _sources = options.Value;
+    _scopeFactory = scopeFactory;
+  }
 
-        public TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSourceConfig> options)
+  public async Task StartAsync(CancellationToken cancellationToken)
+  {
+    using var scope = _scopeFactory.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
+
+    foreach (var (countryCode, source) in _sources)
+    {
+      foreach (var year in source.Years)
+      {
+        var fullUrl = $"{source.BaseUrl}={year}";
+        try
         {
-            _httpClient = httpClient;
-            _sourceUrls = options.Value.ToDictionary();
+          var points = await DownloadAndParseYieldCurveAsync(countryCode, fullUrl);
+
+          await dbContext.YieldCurvePoints.AddRangeAsync(points,cancellationToken);
+          await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+          Console.WriteLine($"Error loading data for {countryCode} year {year}: {ex.Message}");
         }
 
-        public async Task<List<YieldCurvePoint>> DownloadAndParseYieldCurveAsync(string country, int year)
-        {
-            if (!_sourceUrls.TryGetValue(country.ToUpper(), out var baseUrl))
-            {
-                throw new ArgumentException($"No URL configured for country code '{country}'");
-            }
+         Console.WriteLine($"Finished loading data for {countryCode} year {year}");
+      }
+    }
 
-            var fullUrl = $"{baseUrl}={year}";
-            var xml = await _httpClient.GetStringAsync(fullUrl);
 
-            var doc = XDocument.Parse(xml);
+  }
 
-      XNamespace atom = "http://www.w3.org/2005/Atom";
-      XNamespace d = "http://schemas.microsoft.com/ado/2007/08/dataservices";
-      XNamespace m = "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata";
+  public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-      var entries = doc.Descendants(atom + "entry");
+  public async Task<List<YieldCurvePoint>> DownloadAndParseYieldCurveAsync(string country, string url)
+  {
+    var xml = await _httpClient.GetStringAsync(url);
+    var doc = XDocument.Parse(xml);
 
-      //XNamespace d = "http://schemas.microsoft.com/ado/2007/08/dataservices";
-      //      XNamespace m = "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata";
+    XNamespace atom = "http://www.w3.org/2005/Atom";
+    XNamespace d = "http://schemas.microsoft.com/ado/2007/08/dataservices";
+    XNamespace m = "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata";
 
-            var entries1 = new List<YieldCurvePoint>();
+    var entries = doc.Descendants(atom + "entry");
+    var result = new List<YieldCurvePoint>();
 
-      foreach (var entry in entries)
+    foreach (var entry in entries)
+    {
+      var props = entry.Descendants(m + "properties").FirstOrDefault();
+      if (props == null) continue;
+
+      var dateStr = props.Element(d + "NEW_DATE")?.Value;
+      if (!DateTime.TryParse(dateStr, out var date)) continue;
+
+      foreach (var element in props.Elements())
       {
-        var props = entry.Descendants(m + "properties").FirstOrDefault();
-        if (props == null) continue;
+        var localName = element.Name.LocalName;
+        if (!localName.StartsWith("BC_") || localName == "BC_30YEARDISPLAY")
+          continue;
 
-        var dateStr = props.Element(d + "NEW_DATE")?.Value;
-        if (!DateTime.TryParse(dateStr, out var date)) continue;
+        var maturity = localName.Replace("BC_", "")
+                                .Replace("YEAR", "Y")
+                                .Replace("MONTH", "M");
 
-        foreach (var element in props.Elements())
+        if (double.TryParse(element.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var yield))
         {
-          var localName = element.Name.LocalName;
-          if (!localName.StartsWith("BC_") || localName == "BC_30YEARDISPLAY")
-            continue;
-
-          var maturity = localName.Replace("BC_", "")
-                                  .Replace("YEAR", "Y")
-                                  .Replace("MONTH", "M");
-
-          if (double.TryParse(element.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var yield))
+          result.Add(new YieldCurvePoint
           {
-            entries1.Add(new YieldCurvePoint
-            {
-              Country = "US",
-              Date = date,
-              Maturity = maturity,
-              Yield = yield
-            });
-          }
+            Country = country,
+            Date = date,
+            Maturity = maturity,
+            Yield = yield
+          });
         }
       }
-
-
-      return entries1;
-        }
     }
+
+    return result;
+  }
 }
