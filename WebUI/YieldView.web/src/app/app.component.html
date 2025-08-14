@@ -1,1 +1,25 @@
-<app-yield-curve-chart></app-yield-curve-chart>
+<div style="display: flex; gap: 20px; align-items: flex-start;">
+
+  <!-- Auswahlmenü -->
+  <div style="min-width: 200px;">
+    <h3>Filter</h3>
+
+    <label for="country">Staat:</label>
+    <select id="country" [(ngModel)]="country" (change)="updateChart()">
+      <option value="US">USA</option>
+      <option value="DE">Deutschland</option>
+      <option value="JP">Japan</option>
+    </select>
+
+    <br><br>
+
+    <label for="date">Datum:</label>
+    <input id="date" type="date" [(ngModel)]="date" (change)="updateChart()" />
+  </div>
+
+  <!-- Chart -->
+  <div style="flex: 1;">
+    <app-yield-curve-chart [country]="country" [date]="date"></app-yield-curve-chart>
+  </div>
+
+</div>

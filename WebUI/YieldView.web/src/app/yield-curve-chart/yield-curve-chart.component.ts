@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { YieldCurveService } from '../services/yield-curve.service';
 import { Chart, registerables } from 'chart.js';
 import { YieldCurvePoint } from '../Modules/YieldCurvePoint';
@@ -11,11 +11,11 @@ const maturityOrder = ["1M", "3M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "2
   selector: 'app-yield-curve-chart',
   templateUrl: './yield-curve-chart.component.html',
   styleUrls: ['./yield-curve-chart.component.css'],
-  standalone:false,
+  standalone: true,
 })
-export class YieldCurveChartComponent implements OnInit {
-  country = 'US';
-  date = '2025-08-08';
+export class YieldCurveChartComponent implements OnInit, OnChanges {
+  @Input() country = 'US';
+  @Input() date = '2025-08-08';
 
   chart: any;
 
@@ -25,23 +25,24 @@ export class YieldCurveChartComponent implements OnInit {
     this.loadDataAndRenderChart();
   }
 
+ ngOnChanges(changes: SimpleChanges): void {
+  console.log('Changes detected:', changes);
+  if ((changes['country'] && !changes['country'].firstChange) ||
+      (changes['date'] && !changes['date'].firstChange)) {
+    this.loadDataAndRenderChart();
+  }
+}
+
   loadDataAndRenderChart() {
-    
-    this.yieldCurveService.getYieldCurve(this.country, this.date).subscribe(
-      data => {
-      this.createChart(
-        data.sort(
+    this.yieldCurveService.getYieldCurve(this.country, this.date).subscribe(data => {
+      const sortedData = data.sort(
         (a, b) => maturityOrder.indexOf(a.maturity) - maturityOrder.indexOf(b.maturity)
-      ));
-      }
-    )}
+      );
+      this.createChart(sortedData);
+    });
+  }
 
   createChart(data: YieldCurvePoint[]) {
-
-     data.sort(
-        (a, b) => maturityOrder.indexOf(a.maturity) - maturityOrder.indexOf(b.maturity)
-      )
-
     const labels = data.map(d => d.maturity);
     const yields = data.map(d => d.yield);
 
@@ -67,16 +68,10 @@ export class YieldCurveChartComponent implements OnInit {
         responsive: true,
         scales: {
           y: {
-            title: {
-              display: true,
-              text: 'Yield (%)'
-            }
+            title: { display: true, text: 'Yield (%)' }
           },
           x: {
-            title: {
-              display: true,
-              text: 'Maturity'
-            }
+            title: { display: true, text: 'Maturity' }
           }
         }
       }
