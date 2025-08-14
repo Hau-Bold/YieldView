@@ -5,6 +5,8 @@ import { YieldCurvePoint } from '../Modules/YieldCurvePoint';
 
 Chart.register(...registerables);
 
+const maturityOrder = ["1M", "3M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"];
+
 @Component({
   selector: 'app-yield-curve-chart',
   templateUrl: './yield-curve-chart.component.html',
@@ -24,13 +26,21 @@ export class YieldCurveChartComponent implements OnInit {
   }
 
   loadDataAndRenderChart() {
-    this.yieldCurveService.getYieldCurve(this.country, this.date).subscribe(data => {
-      this.createChart(data);
-    });
-  }
+    
+    this.yieldCurveService.getYieldCurve(this.country, this.date).subscribe(
+      data => {
+      this.createChart(
+        data.sort(
+        (a, b) => maturityOrder.indexOf(a.maturity) - maturityOrder.indexOf(b.maturity)
+      ));
+      }
+    )}
 
   createChart(data: YieldCurvePoint[]) {
-    data.sort((a, b) => a.maturity.localeCompare(b.maturity));
+
+     data.sort(
+        (a, b) => maturityOrder.indexOf(a.maturity) - maturityOrder.indexOf(b.maturity)
+      )
 
     const labels = data.map(d => d.maturity);
     const yields = data.map(d => d.yield);
