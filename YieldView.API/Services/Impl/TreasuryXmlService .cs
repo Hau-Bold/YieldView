@@ -24,33 +24,33 @@ public class TreasuryXmlService : IHostedService
     using var scope = _scopeFactory.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
 
-    foreach (var (countryCode, source) in _sources)
+    if (!_sources.TryGetValue("US", out var usSource))
     {
-      foreach (var year in source.Years)
-      {
-        var fullUrl = $"{source.BaseUrl}={year}";
-        try
-        {
-          var points = await DownloadAndParseYieldCurveAsync(countryCode, fullUrl);
-
-          await dbContext.YieldCurvePoints.AddRangeAsync(points,cancellationToken);
-          await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-          Console.WriteLine($"Error loading data for {countryCode} year {year}: {ex.Message}");
-        }
-
-         Console.WriteLine($"Finished loading data for {countryCode} year {year}");
-      }
+      Console.WriteLine("US source not configured.");
+      return;
     }
 
+    foreach (var year in usSource.Years)
+    {
+      var fullUrl = $"{usSource.BaseUrl}={year}";
+      try
+      {
+        var points = await DownloadAndParseYieldCurveAsync("US", fullUrl);
+        await dbContext.USYieldCurvePoints.AddRangeAsync(points, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Error loading US data for year {year}: {ex.Message}");
+      }
 
+      Console.WriteLine($"Finished loading US data for year {year}");
+    }
   }
 
   public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-  public async Task<List<YieldCurvePoint>> DownloadAndParseYieldCurveAsync(string country, string url)
+  private async Task<List<YieldCurvePoint>> DownloadAndParseYieldCurveAsync(string country, string url)
   {
     var xml = await _httpClient.GetStringAsync(url);
     var doc = XDocument.Parse(xml);
