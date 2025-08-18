@@ -18,8 +18,8 @@ builder.Services.AddDbContext<YieldDbContext>(options
 builder.Services.Configure<YieldCurveSourcesConfig>(
     builder.Configuration.GetSection("YieldCurveSources"));
 
-//builder.Services.AddHttpClient<TreasuryXmlService>();
-//builder.Services.AddHostedService<TreasuryXmlService>();
+builder.Services.AddHttpClient<TreasuryXmlService>();
+builder.Services.AddHostedService<TreasuryXmlService>();
 
 builder.Services.AddHttpClient<SP500Service>();
 builder.Services.AddHostedService<SP500Service>();

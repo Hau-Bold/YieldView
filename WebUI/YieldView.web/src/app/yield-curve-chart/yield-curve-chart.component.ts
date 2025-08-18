@@ -5,7 +5,7 @@ import { YieldCurvePoint } from '../Modules/YieldCurvePoint';
 
 Chart.register(...registerables);
 
-const maturityOrder = ["1M", "3M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"];
+const maturityOrder = ["1M", "1_5M",  "2M", "3M", "4M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"];
 
 @Component({
   selector: 'app-yield-curve-chart',
