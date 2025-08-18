@@ -2,6 +2,8 @@ import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/cor
 import { YieldCurveService } from '../services/yield-curve.service';
 import { Chart, registerables } from 'chart.js';
 import { YieldCurvePoint } from '../Modules/YieldCurvePoint';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 Chart.register(...registerables);
 
@@ -12,6 +14,7 @@ const maturityOrder = ["1M", "1_5M",  "2M", "3M", "4M", "6M", "1Y", "2Y", "3Y", 
   templateUrl: './yield-curve-chart.component.html',
   styleUrls: ['./yield-curve-chart.component.css'],
   standalone: true,
+  imports: [CommonModule, RouterModule],
 })
 export class YieldCurveChartComponent implements OnInit, OnChanges {
   @Input() country = 'US';

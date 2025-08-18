@@ -1,3 +1,28 @@
+<!-- Navigation Bar -->
+<nav class="relative z-50 flex items-center justify-between px-2 py-3 bg-red-500 mb-3">
+  <div class="container px-4 mx-auto flex flex-wrap items-center justify-between">
+    <div class="w-full relative flex justify-between lg:w-auto px-4 lg:static lg:block lg:justify-start">
+      <div class="navbar-logo">
+        <h1 class="py-10 font-extrabold text-5xl text-white">
+          <span class="flex">
+            <img src="../../assets/angular-logo.png" alt="Logo" class="h-10 mr-2" />
+             YieldView
+          </span>
+        </h1>
+      </div>
+    </div>
+    <div class="lg:flex lg:flex-grow items-center">
+      <ul class="flex flex-col lg:flex-row list-none ml-auto">
+        <li class="nav-item">
+          <a class="px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75" routerLink="">
+            <i class="fab fa-facebook-square text-lg leading-lg text-white opacity-75"></i><span class="ml-2">Home</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
 <div>
   <canvas id="yieldChart"></canvas>
 </div>
