@@ -6,15 +6,8 @@ namespace YieldView.API.Controllers
 {
   [Route("api/[controller]")]
   [ApiController]
-  public class SP500Controller : ControllerBase
+  public class SP500Controller(SP500DataProvider dataProvider) : ControllerBase
   {
-    private SP500DataProvider dataProvider;
-
-    public SP500Controller(SP500DataProvider dataProvider)
-    {
-      this.dataProvider = dataProvider;
-    }
-
     [HttpGet]
     public async Task<ActionResult<List<SP500Price>>> Get()
     {

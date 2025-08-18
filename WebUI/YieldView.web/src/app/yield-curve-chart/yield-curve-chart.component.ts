@@ -4,6 +4,8 @@ import { Chart, registerables } from 'chart.js';
 import { YieldCurvePoint } from '../Modules/YieldCurvePoint';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { SP500Service } from '../services/sp500.service';
+import { SP500Price } from '../Modules/SP500Price';
 
 Chart.register(...registerables);
 
@@ -22,10 +24,11 @@ export class YieldCurveChartComponent implements OnInit, OnChanges {
 
   chart: any;
 
-  constructor(private yieldCurveService: YieldCurveService) {}
+  constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service) {}
 
   ngOnInit(): void {
     this.loadDataAndRenderChart();
+     this.loadSp500Chart();
   }
 
  ngOnChanges(changes: SimpleChanges): void {
@@ -80,4 +83,46 @@ export class YieldCurveChartComponent implements OnInit, OnChanges {
       }
     });
   }
+
+  loadSp500Chart() {
+  this.sp500Service.getPrices().subscribe(data => {
+    const sorted = data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    this.createSp500Chart(sorted);
+  });
+}
+
+createSp500Chart(data: SP500Price[]) {
+  const labels = data.map(d => d.date);
+  const values = data.map(d => d.close);
+
+  const ctx = document.getElementById('sp500Chart') as HTMLCanvasElement;
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'S&P 500 (Closing Price)',
+        data: values,
+        borderColor: 'green',
+        fill: false,
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          title: { display: true, text: 'Price (USD)' }
+        },
+        x: {
+          title: { display: true, text: 'Date' },
+          ticks: { maxTicksLimit: 10 } 
+        }
+      }
+    }
+  });
+}
+
+
 }
