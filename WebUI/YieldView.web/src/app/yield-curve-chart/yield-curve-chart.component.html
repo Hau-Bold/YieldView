@@ -6,7 +6,7 @@
         <h1 class="py-10 font-extrabold text-5xl text-white">
           <span class="flex">
             <img src="../../assets/angular-logo.png" alt="Logo" class="h-10 mr-2" />
-             YieldView
+            YieldView
           </span>
         </h1>
       </div>
@@ -14,8 +14,12 @@
     <div class="lg:flex lg:flex-grow items-center">
       <ul class="flex flex-col lg:flex-row list-none ml-auto">
         <li class="nav-item">
-          <a class="px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75" routerLink="">
-            <i class="fab fa-facebook-square text-lg leading-lg text-white opacity-75"></i><span class="ml-2">Home</span>
+          <a
+            class="px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75"
+            routerLink=""
+          >
+            <i class="fab fa-facebook-square text-lg leading-lg text-white opacity-75"></i
+            ><span class="ml-2">Home</span>
           </a>
         </li>
       </ul>
@@ -23,12 +27,54 @@
   </div>
 </nav>
 
-<div class="grid grid-cols-2 gap-6 p-6">
-  <div>
-    <canvas id="yieldChart"></canvas>
+<!-- Charts Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+  <!-- Yield Curve Card -->
+  <div class="bg-white rounded-2xl shadow-lg p-6">
+    <h2 class="text-xl font-bold mb-4 text-gray-700">Yield Curve</h2>
+
+    <!-- Date Picker -->
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-600 mb-1">Select Date</label>
+      <input
+        type="date"
+        [value]="date"
+        (change)="onDateChange($event)"
+        class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+
+    <!-- Chart -->
+    <canvas id="yieldChart" class="w-full h-80"></canvas>
   </div>
-  <div>
-    <canvas id="sp500Chart"></canvas>
+
+  <!-- SP500 Card -->
+  <div class="bg-white rounded-2xl shadow-lg p-6">
+    <h2 class="text-xl font-bold mb-4 text-gray-700">S&P 500</h2>
+
+    <!-- Date Range Picker -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">From</label>
+        <input
+          type="date"
+          [value]="sp500FromDate"
+          (change)="onSp500FromDateChange($event)"
+          class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">To</label>
+        <input
+          type="date"
+          [value]="sp500ToDate"
+          (change)="onSp500ToDateChange($event)"
+          class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <canvas id="sp500Chart" class="w-full h-80"></canvas>
   </div>
 </div>
-

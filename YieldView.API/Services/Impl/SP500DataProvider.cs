@@ -13,14 +13,15 @@ public class SP500DataProvider
     this.scopeFactory = scopeFactory;
   }
 
-  public async Task<List<SP500Price>> GetHistoricalPricesAsync()
+  public async Task<List<SP500Price>> GetHistoricalPricesAsync(DateTime from, DateTime to)
   {
     using var scope = scopeFactory.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
 
     return await dbContext.SP500Prices
-                         .OrderBy(p => p.Date)
-                         .ToListAsync();
+                          .Where(p => p.Date >= from && p.Date <= to)
+                          .OrderBy(p => p.Date)
+                          .ToListAsync();
   }
 }
 
