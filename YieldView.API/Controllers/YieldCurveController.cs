@@ -3,36 +3,35 @@ using Microsoft.EntityFrameworkCore;
 using YieldView.API.Data;
 using YieldView.API.Models;
 
-namespace YieldView.API.Controllers
-{
-  [Route("api/[controller]")]
-  [ApiController]
-  public class YieldCurveController : ControllerBase
-    {
-        private readonly YieldDbContext _context;
+namespace YieldView.API.Controllers;
 
-        public YieldCurveController(YieldDbContext context)
-        {
-            _context = context;
-        }
+[Route("api/[controller]")]
+[ApiController]
+public class YieldCurveController : ControllerBase
+  {
+      private readonly YieldDbContext _context;
 
-    [HttpGet("{country}/{date}")]
-    public async Task<ActionResult<IEnumerable<YieldCurvePoint>>> GetYieldCurve(string country, DateTime date)
-    {
+      public YieldCurveController(YieldDbContext context)
+      {
+          _context = context;
+      }
 
-      var startDate = date.Date; 
-      var endDate = startDate.AddDays(1); 
+  [HttpGet("{country}/{date}")]
+  public async Task<ActionResult<IEnumerable<YieldCurvePoint>>> GetYieldCurve(string country, DateTime date)
+  {
 
-      var points = await _context.YieldCurvePoints
-          .Where(p => p.Country.ToUpper() == country.ToUpper()
-                      && p.Date >= startDate
-                      && p.Date < endDate)
-          .ToListAsync();
+    var startDate = date.Date; 
+    var endDate = startDate.AddDays(1); 
 
-      if (points == null || points.Count == 0)
-        return NotFound($"No data for {country} at {date:yyyy-MM-dd}.");
+    var points = await _context.USYieldCurvePoints
+        .Where(p => p.Country.ToUpper() == country.ToUpper()
+                    && p.Date >= startDate
+                    && p.Date < endDate)
+        .ToListAsync();
 
-      return Ok(points);
-    }
+    if (points == null || points.Count == 0)
+      return NotFound($"No data for {country} at {date:yyyy-MM-dd}.");
+
+    return Ok(points);
   }
 }
