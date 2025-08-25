@@ -6,22 +6,15 @@ using YieldView.API.Data;
 using YieldView.API.Models;
 
 namespace YieldView.API.Services.Impl;
-public class TreasuryXmlService : IHostedService
+public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory)
+  : BackgroundService
 {
-  private readonly HttpClient _httpClient;
-  private readonly YieldCurveSourcesConfig _sources;
-  private readonly IServiceScopeFactory _scopeFactory;
-  
-  public TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory)
-  {
-    _httpClient = httpClient;
-    _sources = options.Value;
-    _scopeFactory = scopeFactory;
-  }
+  private readonly YieldCurveSourcesConfig _sources = options.Value;
+  private TimeSpan FetchInterval;
 
-  public async Task StartAsync(CancellationToken cancellationToken)
+  protected override async Task ExecuteAsync(CancellationToken cancellationToken)
   {
-    using var scope = _scopeFactory.CreateScope();
+    using var scope = scopeFactory.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
 
     if (!_sources.TryGetValue("US", out var usSource))
@@ -29,30 +22,34 @@ public class TreasuryXmlService : IHostedService
       Console.WriteLine("US source not configured.");
       return;
     }
+    var fetchInterval = DataFetchHelper.GetDelayForInterval(usSource.FetchInterval);
 
-    foreach (var year in usSource.Years)
+    while (!cancellationToken.IsCancellationRequested)
     {
-      var fullUrl = $"{usSource.BaseUrl}={year}";
-      try
+      foreach (var year in usSource.Years)
       {
-        var points = await DownloadAndParseYieldCurveAsync("US", fullUrl);
-        await dbContext.USYieldCurvePoints.AddRangeAsync(points, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine($"Error loading US data for year {year}: {ex.Message}");
+        var fullUrl = $"{usSource.BaseUrl}={year}";
+        try
+        {
+          var points = await DownloadAndParseYieldCurveAsync("US", fullUrl);
+          await dbContext.USYieldCurvePoints.AddRangeAsync(points, cancellationToken);
+          await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+          Console.WriteLine($"Error loading US data for year {year}: {ex.Message}");
+        }
+
+        Console.WriteLine($"Finished loading US data for year {year}");
       }
 
-      Console.WriteLine($"Finished loading US data for year {year}");
+      await Task.Delay(fetchInterval, cancellationToken);
     }
   }
 
-  public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-
   private async Task<List<YieldCurvePoint>> DownloadAndParseYieldCurveAsync(string country, string url)
   {
-    var xml = await _httpClient.GetStringAsync(url);
+    var xml = await httpClient.GetStringAsync(url);
     var doc = XDocument.Parse(xml);
 
     XNamespace atom = "http://www.w3.org/2005/Atom";
