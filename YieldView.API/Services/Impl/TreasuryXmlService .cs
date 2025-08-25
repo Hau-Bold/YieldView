@@ -26,6 +26,9 @@ public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSource
 
     while (!cancellationToken.IsCancellationRequested)
     {
+      dbContext.USYieldCurvePoints.RemoveRange(dbContext.USYieldCurvePoints);
+      await dbContext.SaveChangesAsync(cancellationToken);
+
       foreach (var year in usSource.Years)
       {
         var fullUrl = $"{usSource.BaseUrl}={year}";

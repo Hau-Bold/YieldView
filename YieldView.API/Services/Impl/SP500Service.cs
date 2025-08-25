@@ -25,6 +25,8 @@ public class SP500Service(HttpClient httpClient, IOptions<YieldCurveSourcesConfi
 
     while (!cancellationToken.IsCancellationRequested)
     {
+      dbContext.SP500Prices.RemoveRange(dbContext.SP500Prices);
+      await dbContext.SaveChangesAsync(cancellationToken);
 
       var startDate = new DateTime(sp500Source.Years[0], 1, 1).ToString("yyyyMMdd");
       var endDate = DateTime.Today.ToString("yyyyMMdd");
