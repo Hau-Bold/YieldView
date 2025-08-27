@@ -4,14 +4,9 @@ using YieldView.API.Models;
 
 namespace YieldView.API.Services.Impl;
 
-public class SP500DataProvider
+public class SP500DataProvider(IServiceScopeFactory scopeFactory)
 {
-  private readonly IServiceScopeFactory scopeFactory;
-
-  public SP500DataProvider(IServiceScopeFactory scopeFactory)
-  {
-    this.scopeFactory = scopeFactory;
-  }
+  private readonly IServiceScopeFactory scopeFactory = scopeFactory;
 
   public async Task<List<SP500Price>> GetHistoricalPricesAsync(DateTime from, DateTime to)
   {

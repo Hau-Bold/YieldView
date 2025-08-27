@@ -2,19 +2,22 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using YieldView.API.Data;
 using YieldView.API.Models;
+using YieldView.API.Services.Impl;
 
 namespace YieldView.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
 public class YieldCurveController : ControllerBase
-  {
+{
       private readonly YieldDbContext _context;
+      private readonly YieldSpreadProvider yieldSpreadProvider;
 
-      public YieldCurveController(YieldDbContext context)
-      {
+  public YieldCurveController(YieldDbContext context, YieldSpreadProvider yieldSpreadProvider)
+  {
           _context = context;
-      }
+    this.yieldSpreadProvider = yieldSpreadProvider;
+  }
 
   [HttpGet("{country}/{date}")]
   public async Task<ActionResult<IEnumerable<YieldCurvePoint>>> GetYieldCurve(string country, DateTime date)
@@ -33,5 +36,25 @@ public class YieldCurveController : ControllerBase
       return NotFound($"No data for {country} at {date:yyyy-MM-dd}.");
 
     return Ok(points);
+  }
+
+  [HttpGet("spread/{from}/{to}/{country}")]
+  public async Task<ActionResult<IEnumerable<YieldSpread>>> GetYieldSpreads(
+          string country, DateTime from, DateTime to)
+  {
+    try
+    {
+      var spreads = await yieldSpreadProvider.GetYieldSpreadsAsync(from, to, country);
+      if (spreads == null || spreads.Count == 0)
+      {
+        return NotFound($"No spread data for {country} between {from:yyyy-MM-dd} and {to:yyyy-MM-dd}.");
+      }
+
+      return Ok(spreads);
+    }
+    catch (ArgumentException ex)
+    {
+      return BadRequest(ex.Message);
+    }
   }
 }
