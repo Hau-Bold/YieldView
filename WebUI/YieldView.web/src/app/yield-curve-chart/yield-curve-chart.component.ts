@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { YieldCurveService } from '../services/yield-curve.service';
 import { Chart, registerables } from 'chart.js';
 import { YieldCurvePoint } from '../Modules/YieldCurvePoint';
@@ -27,6 +27,7 @@ Chart.register(...registerables);
     MatInputModule,
     MatNativeDateModule,
   ],
+  providers: []
 })
 export class YieldCurveChartComponent implements OnInit {
 
@@ -38,16 +39,14 @@ export class YieldCurveChartComponent implements OnInit {
   sp500FromDate:string = '2025-01-01';
   sp500ToDate:string = '2025-08-08';
   sp500CurveChart: any;
-
+  
   constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service)
    {
     const today = new Date();
     this.date =   today.toISOString().split('T')[0]; 
 
     this.sp500ToDate = this.date; 
-    this.sp500FromDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate())
-    .toISOString()
-    .split('T')[0]; 
+    this.sp500FromDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0]; 
    }
 
   ngOnInit(): void {
@@ -73,8 +72,6 @@ export class YieldCurveChartComponent implements OnInit {
   this.loadSp500Chart();
 }
 
-
-
   loadDataAndRenderChart(date: string) {
     this.yieldCurveService.getYieldCurve(this.country, date).subscribe(data => {
       const sortedData = data.sort(
@@ -99,7 +96,7 @@ export class YieldCurveChartComponent implements OnInit {
       data: {
         labels,
         datasets: [{
-          label: `Yield Curve for ${this.country} on ${this.date}`,
+          label: `Yield Curve for ${this.country}`,
           data: yields,
           fill: false,
           borderColor: 'blue',
@@ -166,7 +163,25 @@ createSp500Chart(data: SP500Price[]) {
           title: { display: true, text: 'Date' },
           ticks: { maxTicksLimit: 10 } 
         }
-      }
+      },
+      onClick: (evt: any, elements: any[]) => {
+  if (elements.length > 0) {
+    const index = elements[0].index;
+    const selectedDate = labels[index];
+
+    const formattedDate = selectedDate.split('T')[0];
+
+    this.date = formattedDate;
+
+    const datePicker = document.getElementById('yieldCurveDatePicker') as HTMLInputElement;
+    if (datePicker) {
+      datePicker.value = formattedDate;
+    }
+
+    this.loadDataAndRenderChart(formattedDate);
+  }
+}
+
     }
   });
 }

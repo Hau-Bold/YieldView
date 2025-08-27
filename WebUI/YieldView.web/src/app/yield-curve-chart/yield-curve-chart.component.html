@@ -36,11 +36,12 @@
     <!-- Date Picker -->
     <div class="mb-4">
       <label class="block text-sm font-medium text-gray-600 mb-1">Select Date</label>
-      <input
-        type="date"
-        [value]="date"
-        (change)="onDateChange($event)"
-        class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+     <input
+      id="yieldCurveDatePicker"
+      type="date"
+      [(ngModel)]="date"
+      (change)="onDateChange($event)"
+      class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
 
