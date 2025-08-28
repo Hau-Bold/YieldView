@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
 import { SP500Service } from '../services/sp500.service';
 import { SP500Price } from '../Modules/SP500Price';
+import { forkJoin } from 'rxjs';
 
 Chart.register(...registerables);
 
@@ -118,6 +119,32 @@ export class YieldCurveChartComponent implements OnInit {
   }
 
 loadSp500Chart() {
+
+// forkJoin({
+//     sp500: this.sp500Service.getHistoricalPrices(this.sp500FromDate, this.sp500ToDate),
+//     spreads: this.yieldService.getYieldCurveSpread(this.sp500FromDate, this.sp500ToDate, "US")
+//   }).subscribe(({ sp500, spreads }) => {
+//     const sp500Labels = sp500.map(d => d.date.split('T')[0]);
+
+//     // SP500 Werte
+//     const sp500Data = sp500.map(d => d.close);
+
+//     // Spread Werte (Match nach Datum!)
+//     const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
+//     const spreadData = sp500Labels.map(d => spreadMap.get(d) ?? null);
+
+// TODO:
+forkJoin({
+  sp500:this.sp500Service.getPrices(this.sp500FromDate,this.sp500ToDate),
+  spreads:this.yieldCurveService.getYieldCurveSpread(this.sp500FromDate,this.sp500ToDate, this.country)
+})
+.subscribe(({sp500,spreads}) => {
+
+
+})
+
+
+
   this.sp500Service.getPrices(this.sp500FromDate,this.sp500ToDate).subscribe(data => {
     const filtered = data
       .filter(d =>
