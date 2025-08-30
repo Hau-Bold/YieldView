@@ -18,7 +18,7 @@ export class YieldCurveService {
   }
 
   getYieldCurveSpread(from: string, to: string,country: string): Observable<YieldSpread[]> {
-    return this.http.get<YieldSpread[]>(`${this.baseUrl}?from=${from}&to=${to}&country=${country}`);
+   return this.http.get<YieldSpread[]>(`${this.baseUrl}/spread/${country}/${from}/${to}`);
   }
 }
 

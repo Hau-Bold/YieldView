@@ -38,7 +38,7 @@ public class YieldCurveController : ControllerBase
     return Ok(points);
   }
 
-  [HttpGet("spread/{from}/{to}/{country}")]
+  [HttpGet("spread/{country}/{from}/{to}")]
   public async Task<ActionResult<IEnumerable<YieldSpread>>> GetYieldSpreads(
           string country, DateTime from, DateTime to)
   {

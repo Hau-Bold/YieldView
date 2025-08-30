@@ -140,26 +140,22 @@ forkJoin({
 })
 .subscribe(({sp500,spreads}) => {
 
+  
+  const sp500Labels: string[] = sp500.map(d => d.date.split('T')[0]);
+  const sp500Data: number[] = sp500.map(d => d.close);
+
+  // build dictionary
+   const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
+   const spreadData: (number|null)[]  = sp500Labels.map(d => spreadMap.get(d) ?? null);
+
+    this.createSp500Chart(sp500Labels, sp500Data, spreadData);
 
 })
-
-
-
-  this.sp500Service.getPrices(this.sp500FromDate,this.sp500ToDate).subscribe(data => {
-    const filtered = data
-      .filter(d =>
-        new Date(d.date) >= new Date(this.sp500FromDate) &&
-        new Date(d.date) <= new Date(this.sp500ToDate)
-      )
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    this.createSp500Chart(filtered);
-  });
 }
 
-createSp500Chart(data: SP500Price[]) {
-  const labels = data.map(d => d.date);
-  const values = data.map(d => d.close);
+createSp500Chart(sp500Labels: string[], sp500Data: number[], spreadData: (number | null)[]) {
+  // const labels = data.map(d => d.date);
+  // const values = data.map(d => d.close);
 
   const ctx = document.getElementById('sp500Chart') as HTMLCanvasElement;
 
@@ -171,21 +167,44 @@ createSp500Chart(data: SP500Price[]) {
  this.sp500CurveChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels,
-      datasets: [{
+      labels: sp500Labels,
+      datasets: [
+        {
         label: 'S&P 500 (Closing Price)',
-        data: values,
+        data: sp500Data,
         borderColor: 'green',
         fill: false,
-        tension: 0.1
-      }]
+        tension: 0.1,
+        yAxisID: 'y'
+        },
+        {
+            label: 'Yield Spread (10Y - 6M)',
+            data: spreadData,
+            borderColor: 'red',
+            yAxisID: 'y1'
+        }
+    ]
     },
     options: {
       responsive: true,
+      interaction: {
+          mode: 'index',
+          intersect: false,
+        },
       scales: {
         y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
           title: { display: true, text: 'Price (USD)' }
         },
+         y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'Yield Spread (%)' }
+          },
         x: {
           title: { display: true, text: 'Date' },
           ticks: { maxTicksLimit: 10 } 
@@ -194,7 +213,7 @@ createSp500Chart(data: SP500Price[]) {
       onClick: (evt: any, elements: any[]) => {
   if (elements.length > 0) {
     const index = elements[0].index;
-    const selectedDate = labels[index];
+    const selectedDate = sp500Labels[index];
 
     const formattedDate = selectedDate.split('T')[0];
 
