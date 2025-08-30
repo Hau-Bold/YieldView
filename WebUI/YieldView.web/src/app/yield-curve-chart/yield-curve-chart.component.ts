@@ -1,42 +1,82 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { YieldCurveService } from '../services/yield-curve.service';
 import { Chart, registerables } from 'chart.js';
 import { YieldCurvePoint } from '../Modules/YieldCurvePoint';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatNativeDateModule } from '@angular/material/core';
+import { SP500Service } from '../services/sp500.service';
+import { SP500Price } from '../Modules/SP500Price';
+import { forkJoin } from 'rxjs';
 
 Chart.register(...registerables);
 
-const maturityOrder = ["1M", "3M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"];
 
 @Component({
   selector: 'app-yield-curve-chart',
   templateUrl: './yield-curve-chart.component.html',
   styleUrls: ['./yield-curve-chart.component.css'],
   standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    MatDatepickerModule,
+    MatInputModule,
+    MatNativeDateModule,
+  ],
+  providers: []
 })
-export class YieldCurveChartComponent implements OnInit, OnChanges {
+export class YieldCurveChartComponent implements OnInit {
+
   @Input() country = 'US';
-  @Input() date = '2025-08-08';
+  maturityOrder:string[] = ["1M", "1_5M",  "2M", "3M", "4M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"];
+  date: string  ='2025-08-08';
+  yieldCurveChart: any;
 
-  chart: any;
+  sp500FromDate:string = '2025-01-01';
+  sp500ToDate:string = '2025-08-08';
+  sp500CurveChart: any;
+  
+  constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service)
+   {
+    const today = new Date();
+    this.date =   today.toISOString().split('T')[0]; 
 
-  constructor(private yieldCurveService: YieldCurveService) {}
+    this.sp500ToDate = this.date; 
+    this.sp500FromDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0]; 
+   }
 
   ngOnInit(): void {
-    this.loadDataAndRenderChart();
+    this.loadDataAndRenderChart(this.date);
+     this.loadSp500Chart();
   }
 
- ngOnChanges(changes: SimpleChanges): void {
-  console.log('Changes detected:', changes);
-  if ((changes['country'] && !changes['country'].firstChange) ||
-      (changes['date'] && !changes['date'].firstChange)) {
-    this.loadDataAndRenderChart();
+   onDateChange(event: Event):void {
+    const target = event.target as HTMLInputElement;
+    this.date = target.value;
+    this.loadDataAndRenderChart(this.date);
   }
+
+  onSp500FromDateChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  this.sp500FromDate = target.value;
+  this.loadSp500Chart();
+ }
+
+  onSp500ToDateChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  this.sp500ToDate = target.value;
+  this.loadSp500Chart();
 }
 
-  loadDataAndRenderChart() {
-    this.yieldCurveService.getYieldCurve(this.country, this.date).subscribe(data => {
+  loadDataAndRenderChart(date: string) {
+    this.yieldCurveService.getYieldCurve(this.country, date).subscribe(data => {
       const sortedData = data.sort(
-        (a, b) => maturityOrder.indexOf(a.maturity) - maturityOrder.indexOf(b.maturity)
+        (a, b) => this.maturityOrder.indexOf(a.maturity) - this.maturityOrder.indexOf(b.maturity)
       );
       this.createChart(sortedData);
     });
@@ -48,16 +88,16 @@ export class YieldCurveChartComponent implements OnInit, OnChanges {
 
     const ctx = document.getElementById('yieldChart') as HTMLCanvasElement;
 
-    if (this.chart) {
-      this.chart.destroy();
+    if (this.yieldCurveChart) {
+      this.yieldCurveChart.destroy();
     }
 
-    this.chart = new Chart(ctx, {
+    this.yieldCurveChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels,
         datasets: [{
-          label: `Yield Curve for ${this.country} on ${this.date}`,
+          label: `Yield Curve for ${this.country}`,
           data: yields,
           fill: false,
           borderColor: 'blue',
@@ -77,4 +117,118 @@ export class YieldCurveChartComponent implements OnInit, OnChanges {
       }
     });
   }
+
+loadSp500Chart() {
+
+// forkJoin({
+//     sp500: this.sp500Service.getHistoricalPrices(this.sp500FromDate, this.sp500ToDate),
+//     spreads: this.yieldService.getYieldCurveSpread(this.sp500FromDate, this.sp500ToDate, "US")
+//   }).subscribe(({ sp500, spreads }) => {
+//     const sp500Labels = sp500.map(d => d.date.split('T')[0]);
+
+//     // SP500 Werte
+//     const sp500Data = sp500.map(d => d.close);
+
+//     // Spread Werte (Match nach Datum!)
+//     const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
+//     const spreadData = sp500Labels.map(d => spreadMap.get(d) ?? null);
+
+// TODO:
+forkJoin({
+  sp500:this.sp500Service.getPrices(this.sp500FromDate,this.sp500ToDate),
+  spreads:this.yieldCurveService.getYieldCurveSpread(this.sp500FromDate,this.sp500ToDate, this.country)
+})
+.subscribe(({sp500,spreads}) => {
+
+  
+  const sp500Labels: string[] = sp500.map(d => d.date.split('T')[0]);
+  const sp500Data: number[] = sp500.map(d => d.close);
+
+  // build dictionary
+   const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
+   const spreadData: (number|null)[]  = sp500Labels.map(d => spreadMap.get(d) ?? null);
+
+    this.createSp500Chart(sp500Labels, sp500Data, spreadData);
+
+})
+}
+
+createSp500Chart(sp500Labels: string[], sp500Data: number[], spreadData: (number | null)[]) {
+  // const labels = data.map(d => d.date);
+  // const values = data.map(d => d.close);
+
+  const ctx = document.getElementById('sp500Chart') as HTMLCanvasElement;
+
+  if(this.sp500CurveChart)
+   {
+      this.sp500CurveChart.destroy();
+   }
+
+ this.sp500CurveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sp500Labels,
+      datasets: [
+        {
+        label: 'S&P 500 (Closing Price)',
+        data: sp500Data,
+        borderColor: 'green',
+        fill: false,
+        tension: 0.1,
+        yAxisID: 'y'
+        },
+        {
+            label: 'Yield Spread (10Y - 6M)',
+            data: spreadData,
+            borderColor: 'red',
+            yAxisID: 'y1'
+        }
+    ]
+    },
+    options: {
+      responsive: true,
+      interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: { display: true, text: 'Price (USD)' }
+        },
+         y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'Yield Spread (%)' }
+          },
+        x: {
+          title: { display: true, text: 'Date' },
+          ticks: { maxTicksLimit: 10 } 
+        }
+      },
+      onClick: (evt: any, elements: any[]) => {
+  if (elements.length > 0) {
+    const index = elements[0].index;
+    const selectedDate = sp500Labels[index];
+
+    const formattedDate = selectedDate.split('T')[0];
+
+    this.date = formattedDate;
+
+    const datePicker = document.getElementById('yieldCurveDatePicker') as HTMLInputElement;
+    if (datePicker) {
+      datePicker.value = formattedDate;
+    }
+
+    this.loadDataAndRenderChart(formattedDate);
+  }
+}
+
+    }
+  });
+}
 }

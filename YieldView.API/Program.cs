@@ -21,6 +21,12 @@ builder.Services.Configure<YieldCurveSourcesConfig>(
 builder.Services.AddHttpClient<TreasuryXmlService>();
 builder.Services.AddHostedService<TreasuryXmlService>();
 
+builder.Services.AddHttpClient<SP500Service>();
+builder.Services.AddHostedService<SP500Service>();
+
+builder.Services.AddScoped<SP500DataProvider>();
+builder.Services.AddScoped<YieldSpreadProvider>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
