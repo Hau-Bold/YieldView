@@ -39,6 +39,8 @@ export class YieldCurveChartComponent implements OnInit {
 
   sp500FromDate:string = '2025-01-01';
   sp500ToDate:string = '2025-08-08';
+  volatilityWindowSize: number = 10; 
+  volatilityThreshold: number = 0.0011;
   sp500CurveChart: any;
   
   constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service)
@@ -73,6 +75,18 @@ export class YieldCurveChartComponent implements OnInit {
   this.loadSp500Chart();
 }
 
+  onVolatilityWindowSizeChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  this.volatilityWindowSize = Number(target.value);
+  this.loadSp500Chart();
+  }
+
+  onVolatilityThresholdChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  this.volatilityThreshold = Number(target.value);
+  this.loadSp500Chart();
+}
+
   loadDataAndRenderChart(date: string) {
     this.yieldCurveService.getYieldCurve(this.country, date).subscribe(data => {
       const sortedData = data.sort(
@@ -97,15 +111,24 @@ export class YieldCurveChartComponent implements OnInit {
       data: {
         labels,
         datasets: [{
-          label: `Yield Curve for ${this.country}`,
-          data: yields,
-          fill: false,
-          borderColor: 'blue',
-          tension: 0.1
-        }]
+            label: `Yield Curve for ${this.country}`,
+            data: yields,
+            borderColor: 'blue',
+            fill: false,
+            tension: 0,
+            spanGaps: true,
+            pointRadius: 0,      
+            pointHoverRadius: 4, 
+            pointBorderWidth: 0
+        }
+      ]
       },
       options: {
         responsive: true,
+         interaction: {
+          mode: 'index',
+          intersect: false,
+        },
         scales: {
           y: {
             title: { display: true, text: 'Yield (%)' }
@@ -119,23 +142,8 @@ export class YieldCurveChartComponent implements OnInit {
   }
 
 loadSp500Chart() {
-
-// forkJoin({
-//     sp500: this.sp500Service.getHistoricalPrices(this.sp500FromDate, this.sp500ToDate),
-//     spreads: this.yieldService.getYieldCurveSpread(this.sp500FromDate, this.sp500ToDate, "US")
-//   }).subscribe(({ sp500, spreads }) => {
-//     const sp500Labels = sp500.map(d => d.date.split('T')[0]);
-
-//     // SP500 Werte
-//     const sp500Data = sp500.map(d => d.close);
-
-//     // Spread Werte (Match nach Datum!)
-//     const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
-//     const spreadData = sp500Labels.map(d => spreadMap.get(d) ?? null);
-
-// TODO:
 forkJoin({
-  sp500:this.sp500Service.getPrices(this.sp500FromDate,this.sp500ToDate),
+  sp500:this.sp500Service.getPricesWithVolatility(this.sp500FromDate,this.sp500ToDate, this.volatilityWindowSize),
   spreads:this.yieldCurveService.getYieldCurveSpread(this.sp500FromDate,this.sp500ToDate, this.country)
 })
 .subscribe(({sp500,spreads}) => {
@@ -143,20 +151,22 @@ forkJoin({
   
   const sp500Labels: string[] = sp500.map(d => d.date.split('T')[0]);
   const sp500Data: number[] = sp500.map(d => d.close);
+  const sp500Vols: number[] = sp500.map(d => d.volatility);
+
+  
+  console.log('SP500 Volatilities:', sp500Vols);
 
   // build dictionary
    const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
    const spreadData: (number|null)[]  = sp500Labels.map(d => spreadMap.get(d) ?? null);
 
-    this.createSp500Chart(sp500Labels, sp500Data, spreadData);
+    this.createSp500Chart(sp500Labels, sp500Data,sp500Vols, spreadData);
 
 })
 }
 
-createSp500Chart(sp500Labels: string[], sp500Data: number[], spreadData: (number | null)[]) {
-  // const labels = data.map(d => d.date);
-  // const values = data.map(d => d.close);
-
+createSp500Chart(sp500Labels: string[], sp500Data: number[], sp500Vols: number[], spreadData: (number | null)[]) {
+ 
   const ctx = document.getElementById('sp500Chart') as HTMLCanvasElement;
 
   if(this.sp500CurveChart)
@@ -173,14 +183,28 @@ createSp500Chart(sp500Labels: string[], sp500Data: number[], spreadData: (number
         label: 'S&P 500 (Closing Price)',
         data: sp500Data,
         borderColor: 'green',
+        segment: {
+        borderColor: ctx => {
+                             const i = ctx.p0DataIndex; 
+                             return sp500Vols[i] <= this.volatilityThreshold ? 'green' : 'black';
+                            }
+                    },
         fill: false,
-        tension: 0.1,
+        tension: 0,
+        spanGaps: true,
+        pointRadius: 0,      
+        pointHoverRadius: 4, 
+        pointBorderWidth: 0, 
         yAxisID: 'y'
         },
         {
             label: 'Yield Spread (10Y - 6M)',
             data: spreadData,
             borderColor: 'red',
+            spanGaps: true,
+            pointRadius: 0,      
+            pointHoverRadius: 4, 
+            pointBorderWidth: 0,
             yAxisID: 'y1'
         }
     ]
@@ -191,6 +215,32 @@ createSp500Chart(sp500Labels: string[], sp500Data: number[], spreadData: (number
           mode: 'index',
           intersect: false,
         },
+         plugins: {
+        tooltip: {
+          callbacks: {
+
+            label: (context) => {
+                 const idx = context.dataIndex;
+                 const dsLabel = context.dataset.label;
+
+                 if (dsLabel === 'S&P 500 (Closing Price)')
+                 {
+                    const price = context.formattedValue;
+                    const vola = sp500Vols[idx];
+                    return `Close: ${price}  |  Volatility: ${vola.toFixed(2)}`;
+                 }
+
+                 if (dsLabel === 'Yield Spread (10Y - 6M)') 
+                 {
+                  const spread = context.formattedValue;
+                  return `Yield Spread: ${spread}`;
+                 }
+
+              return `${dsLabel}: ${context.formattedValue}`;
+            },
+          },
+        },
+      },
       scales: {
         y: {
           type: 'linear',

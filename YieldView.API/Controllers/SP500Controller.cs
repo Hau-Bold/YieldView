@@ -25,4 +25,31 @@ public class SP500Controller(SP500DataProvider dataProvider) : ControllerBase
 
     return Ok(prices);
   }
+
+
+  //GET https://localhost:7031/api/sp500/volatility?from=2024-08-01&to=2025-08-01&dataInterval=20
+  [HttpGet("volatility")]
+  public async Task<ActionResult<IEnumerable<SP500PriceWithVolatility>>>
+    GetHistoricalPricesWithVolatility(
+        [FromQuery] DateTime from,
+        [FromQuery] DateTime to,
+        [FromQuery] int dataInterval)
+  {
+    try
+    {
+      var results = await dataProvider.GetHistoricalPricesWithVolatilityAsync(from, to, dataInterval);
+
+      if (results == null || results.Count == 0)
+      {
+        return NotFound($"No volatility data between {from:yyyy-MM-dd} and {to:yyyy-MM-dd}.");
+      }
+
+      return Ok(results);
+    }
+    catch (ArgumentException ex)
+    {
+      return BadRequest(ex.Message);
+    }
+  }
+
 }
