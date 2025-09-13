@@ -21,7 +21,7 @@ public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataPro
   }
 
     /// <inheritdoc />  
-    public async Task<List<SP500PriceWithVolatility>> GetHistoricalPricesWithVolatilityAsync(DateTime from, DateTime to, int dataInterval)
+    public async Task<List<SP500PriceWithVolatility>> GetHistoricalPricesWithVolatilityAsync(DateTime from, DateTime to, int dataInterval, double eps)
     {
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
@@ -30,6 +30,9 @@ public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataPro
             .Where(p => p.Date >= from && p.Date <= to)
             .OrderBy(p => p.Date)
             .ToListAsync();
+
+    //MarkLocalMax(prices);
+    MarkLokalShadowPoint(prices, eps);
 
         List<double> returns = GetReturns(prices);
 
@@ -42,14 +45,98 @@ public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataPro
             {
                 Date = prices[i].Date,
                 Close = prices[i].Close,
-                Volatility = volatility
+                Volatility = volatility,
+                IsLocalShadowPoint = prices[i].IsLocalShadowPoint
             });
         }
 
         return result;
     }
 
+  public void MarkLocalMax(List<SP500Price> sp500Prices)
+  {
+    foreach (var p in sp500Prices)
+    {
+      p.IsLocalShadowPoint = false;
+    }
 
+    int i = 0;
+
+    while( i < sp500Prices.Count -1)
+    {
+      int k = 1;
+      var current = sp500Prices[i];
+
+      // Move forward while the next close price is less than or equal to the current close price
+      while (i + k < sp500Prices.Count && sp500Prices[i +k].Close   <= current.Close)
+      {
+        k++;
+      }
+
+      if(k > 1)
+      {
+        current.IsLocalShadowPoint = true;
+        i += k;
+      }
+      else
+      {
+        i++;
+      }
+
+    }
+  }
+
+  public void MarkLokalShadowPoint(List<SP500Price> sp500Prices,double eps)
+  {
+    if(sp500Prices.Count <= 2)
+    {
+      return;
+    }
+
+    foreach (var p in sp500Prices)
+    {
+      p.IsLocalShadowPoint = false;
+    }
+
+    int i = 0;
+
+    while (i < sp500Prices.Count - 1)
+    {
+      int k = 1;
+      var current = sp500Prices[i];
+      var initDiff = (current.Close - sp500Prices[i + 1].Close) / current.Close;
+
+
+      // Move forward while 
+      while (i + k < sp500Prices.Count)
+      {
+        var currentDiff = (current.Close - sp500Prices[i + k].Close) / current.Close;
+        if (Math.Abs(currentDiff - initDiff) <= eps)
+        {
+          k++;
+        }
+        else
+        {
+          break;
+        }
+      }
+
+      if (k > 1)
+      {
+        // mark interval
+        for (int j = i; j < i + k; j++)
+        {
+          sp500Prices[i].IsLocalShadowPoint = true;
+        }
+
+        i += k;
+      }
+      else
+      {
+        i++;
+      }
+    }
+  }
 
   private static double? CalculateVolatility(List<double> returns, int currentIndex, int dataInterval)
   {

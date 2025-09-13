@@ -16,9 +16,9 @@ export class SP500Service {
   return this.http.get<SP500Price[]>(`${this.baseUrl}?from=${from}&to=${to}`);
 }
 
-getPricesWithVolatility(from: string, to: string, volatilityWindowSize: number) {
+getPricesWithVolatility(from: string, to: string, volatilityWindowSize: number, eps: number) {
   return this.http.get<SP500PriceWithVolatility[]>(
-    `${this.baseUrl}/volatility?from=${from}&to=${to}&dataInterval=${volatilityWindowSize}`
+    `${this.baseUrl}/volatility?from=${from}&to=${to}&dataInterval=${volatilityWindowSize}&eps=${eps}`
   );
 }
 

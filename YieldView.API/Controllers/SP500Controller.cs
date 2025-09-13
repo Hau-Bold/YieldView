@@ -33,11 +33,12 @@ public class SP500Controller(SP500DataProvider dataProvider) : ControllerBase
     GetHistoricalPricesWithVolatility(
         [FromQuery] DateTime from,
         [FromQuery] DateTime to,
-        [FromQuery] int dataInterval)
+        [FromQuery] int dataInterval,
+        [FromQuery] double eps)
   {
     try
     {
-      var results = await dataProvider.GetHistoricalPricesWithVolatilityAsync(from, to, dataInterval);
+      var results = await dataProvider.GetHistoricalPricesWithVolatilityAsync(from, to, dataInterval,eps);
 
       if (results == null || results.Count == 0)
       {

@@ -11,6 +11,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { SP500Service } from '../services/sp500.service';
 import { SP500Price } from '../Modules/SP500Price';
 import { forkJoin } from 'rxjs';
+import { SP500PriceWithVolatility } from '../Modules/SP500PriceWithVolatility';
 
 Chart.register(...registerables);
 
@@ -41,6 +42,7 @@ export class YieldCurveChartComponent implements OnInit {
   sp500ToDate:string = '2025-08-08';
   volatilityWindowSize: number = 10; 
   volatilityThreshold: number = 0.0011;
+  eps: number = 0.1;
   sp500CurveChart: any;
   
   constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service)
@@ -84,6 +86,12 @@ export class YieldCurveChartComponent implements OnInit {
   onVolatilityThresholdChange(event: Event): void {
   const target = event.target as HTMLInputElement;
   this.volatilityThreshold = Number(target.value);
+  this.loadSp500Chart();
+}
+
+  onEpsChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  this.eps = Number(target.value);
   this.loadSp500Chart();
 }
 
@@ -143,29 +151,30 @@ export class YieldCurveChartComponent implements OnInit {
 
 loadSp500Chart() {
 forkJoin({
-  sp500:this.sp500Service.getPricesWithVolatility(this.sp500FromDate,this.sp500ToDate, this.volatilityWindowSize),
+  sp500:this.sp500Service.getPricesWithVolatility(this.sp500FromDate,this.sp500ToDate, this.volatilityWindowSize,this.eps),
   spreads:this.yieldCurveService.getYieldCurveSpread(this.sp500FromDate,this.sp500ToDate, this.country)
 })
 .subscribe(({sp500,spreads}) => {
 
   
   const sp500Labels: string[] = sp500.map(d => d.date.split('T')[0]);
-  const sp500Data: number[] = sp500.map(d => d.close);
+  const sp500Prices: number[] = sp500.map(d => d.close);
   const sp500Vols: number[] = sp500.map(d => d.volatility);
+   const sp500Data = sp500;
 
-  
+ console.log('SP500Data:',JSON.stringify(sp500Data));  
   console.log('SP500 Volatilities:', sp500Vols);
 
   // build dictionary
    const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
    const spreadData: (number|null)[]  = sp500Labels.map(d => spreadMap.get(d) ?? null);
 
-    this.createSp500Chart(sp500Labels, sp500Data,sp500Vols, spreadData);
+    this.createSp500Chart(sp500Labels, sp500Prices,sp500Vols, spreadData, sp500Data);
 
 })
 }
 
-createSp500Chart(sp500Labels: string[], sp500Data: number[], sp500Vols: number[], spreadData: (number | null)[]) {
+createSp500Chart(sp500Labels: string[], sp500Prices: number[], sp500Vols: number[], spreadData: (number | null)[],sp500Data: SP500PriceWithVolatility[]) {
  
   const ctx = document.getElementById('sp500Chart') as HTMLCanvasElement;
 
@@ -181,18 +190,21 @@ createSp500Chart(sp500Labels: string[], sp500Data: number[], sp500Vols: number[]
       datasets: [
         {
         label: 'S&P 500 (Closing Price)',
-        data: sp500Data,
+        data: sp500Prices,
         borderColor: 'green',
         segment: {
         borderColor: ctx => {
                              const i = ctx.p0DataIndex; 
-                             return sp500Vols[i] <= this.volatilityThreshold ? 'green' : 'black';
+                             return sp500Vols[i] < this.volatilityThreshold ? 'green' : 'black';
                             }
                     },
         fill: false,
-        tension: 0,
+        tension: 2,
         spanGaps: true,
-        pointRadius: 0,      
+        pointRadius: (ctx) => {
+          const i = ctx.dataIndex;
+          return sp500Data[i].isLocalShadowPoint ? 8 : 0; 
+        },   
         pointHoverRadius: 4, 
         pointBorderWidth: 0, 
         yAxisID: 'y'
@@ -227,7 +239,7 @@ createSp500Chart(sp500Labels: string[], sp500Data: number[], sp500Vols: number[]
                  {
                     const price = context.formattedValue;
                     const vola = sp500Vols[idx];
-                    return `Close: ${price}  |  Volatility: ${vola.toFixed(2)}`;
+                    return `Close: ${price}  |  Volatility: ${vola}`;
                  }
 
                  if (dsLabel === 'Yield Spread (10Y - 6M)') 

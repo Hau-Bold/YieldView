@@ -5,4 +5,5 @@ public class SP500PriceWithVolatility
   public DateTime Date { get; set; }
   public double Close { get; set; }
   public double? Volatility { get; set; }
+  public bool IsLocalShadowPoint { get; set; } = false;
 }
