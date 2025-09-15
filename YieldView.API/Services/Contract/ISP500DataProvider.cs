@@ -10,8 +10,8 @@ public interface ISP500DataProvider
   /// </summary>  
   /// <param name="from">The start date of the time range.</param>  
   /// <param name="to">The end date of the time range.</param>  
-  /// <param name="dataInterval">The interval in days for the data points.</param>  
+  /// <param name="windowSize">The interval in days for the data points.</param>  
   /// <returns>A task that represents the asynchronous operation. The task result contains a list of S&P 500 prices with their associated volatility.</returns>  
   Task<List<SP500PriceWithVolatility>> GetHistoricalPricesWithVolatilityAsync(
-          DateTime from, DateTime to, int dataInterval = 20, double eps=0.1);
+          DateTime from, DateTime to, int windowSize = 20);
 }

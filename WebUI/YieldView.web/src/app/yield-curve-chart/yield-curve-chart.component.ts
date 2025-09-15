@@ -9,12 +9,10 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
 import { SP500Service } from '../services/sp500.service';
-import { SP500Price } from '../Modules/SP500Price';
 import { forkJoin } from 'rxjs';
 import { SP500PriceWithVolatility } from '../Modules/SP500PriceWithVolatility';
 
 Chart.register(...registerables);
-
 
 @Component({
   selector: 'app-yield-curve-chart',
@@ -151,7 +149,7 @@ export class YieldCurveChartComponent implements OnInit {
 
 loadSp500Chart() {
 forkJoin({
-  sp500:this.sp500Service.getPricesWithVolatility(this.sp500FromDate,this.sp500ToDate, this.volatilityWindowSize,this.eps),
+  sp500:this.sp500Service.getPricesWithVolatility(this.sp500FromDate,this.sp500ToDate, this.volatilityWindowSize),
   spreads:this.yieldCurveService.getYieldCurveSpread(this.sp500FromDate,this.sp500ToDate, this.country)
 })
 .subscribe(({sp500,spreads}) => {
@@ -160,12 +158,8 @@ forkJoin({
   const sp500Labels: string[] = sp500.map(d => d.date.split('T')[0]);
   const sp500Prices: number[] = sp500.map(d => d.close);
   const sp500Vols: number[] = sp500.map(d => d.volatility);
-   const sp500Data = sp500;
+  const sp500Data = sp500;
 
- console.log('SP500Data:',JSON.stringify(sp500Data));  
-  console.log('SP500 Volatilities:', sp500Vols);
-
-  // build dictionary
    const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
    const spreadData: (number|null)[]  = sp500Labels.map(d => spreadMap.get(d) ?? null);
 
@@ -201,10 +195,7 @@ createSp500Chart(sp500Labels: string[], sp500Prices: number[], sp500Vols: number
         fill: false,
         tension: 2,
         spanGaps: true,
-        pointRadius: (ctx) => {
-          const i = ctx.dataIndex;
-          return sp500Data[i].isLocalShadowPoint ? 8 : 0; 
-        },   
+        pointRadius: 0,   
         pointHoverRadius: 4, 
         pointBorderWidth: 0, 
         yAxisID: 'y'

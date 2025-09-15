@@ -21,7 +21,7 @@ public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataPro
   }
 
     /// <inheritdoc />  
-    public async Task<List<SP500PriceWithVolatility>> GetHistoricalPricesWithVolatilityAsync(DateTime from, DateTime to, int dataInterval, double eps)
+    public async Task<List<SP500PriceWithVolatility>> GetHistoricalPricesWithVolatilityAsync(DateTime from, DateTime to, int windowSize)
     {
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
@@ -31,121 +31,31 @@ public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataPro
             .OrderBy(p => p.Date)
             .ToListAsync();
 
-    //MarkLocalMax(prices);
-    MarkLokalShadowPoint(prices, eps);
-
         List<double> returns = GetReturns(prices);
 
         var result = new List<SP500PriceWithVolatility>();
+
         for (int i = 0; i < prices.Count; i++)
         {
-            var volatility = CalculateVolatility(returns, i, dataInterval);
+            var volatility = CalculateVolatility(returns, i, windowSize);
 
-            result.Add(new SP500PriceWithVolatility
-            {
-                Date = prices[i].Date,
-                Close = prices[i].Close,
-                Volatility = volatility,
-                IsLocalShadowPoint = prices[i].IsLocalShadowPoint
-            });
+            result.Add(new SP500PriceWithVolatility(prices[i].Date,prices[i].Close,volatility));
         }
 
         return result;
     }
 
-  public void MarkLocalMax(List<SP500Price> sp500Prices)
-  {
-    foreach (var p in sp500Prices)
-    {
-      p.IsLocalShadowPoint = false;
-    }
-
-    int i = 0;
-
-    while( i < sp500Prices.Count -1)
-    {
-      int k = 1;
-      var current = sp500Prices[i];
-
-      // Move forward while the next close price is less than or equal to the current close price
-      while (i + k < sp500Prices.Count && sp500Prices[i +k].Close   <= current.Close)
-      {
-        k++;
-      }
-
-      if(k > 1)
-      {
-        current.IsLocalShadowPoint = true;
-        i += k;
-      }
-      else
-      {
-        i++;
-      }
-
-    }
-  }
-
-  public void MarkLokalShadowPoint(List<SP500Price> sp500Prices,double eps)
-  {
-    if(sp500Prices.Count <= 2)
-    {
-      return;
-    }
-
-    foreach (var p in sp500Prices)
-    {
-      p.IsLocalShadowPoint = false;
-    }
-
-    int i = 0;
-
-    while (i < sp500Prices.Count - 1)
-    {
-      int k = 1;
-      var current = sp500Prices[i];
-      var initDiff = (current.Close - sp500Prices[i + 1].Close) / current.Close;
-
-
-      // Move forward while 
-      while (i + k < sp500Prices.Count)
-      {
-        var currentDiff = (current.Close - sp500Prices[i + k].Close) / current.Close;
-        if (Math.Abs(currentDiff - initDiff) <= eps)
-        {
-          k++;
-        }
-        else
-        {
-          break;
-        }
-      }
-
-      if (k > 1)
-      {
-        // mark interval
-        for (int j = i; j < i + k; j++)
-        {
-          sp500Prices[i].IsLocalShadowPoint = true;
-        }
-
-        i += k;
-      }
-      else
-      {
-        i++;
-      }
-    }
-  }
-
   private static double? CalculateVolatility(List<double> returns, int currentIndex, int dataInterval)
   {
     if (currentIndex < dataInterval)
+    {
       return null;
+    }
 
     var windowReturns = returns.Skip(currentIndex - dataInterval).Take(dataInterval).ToList();
     double mean = windowReturns.Average();
-    double variance = windowReturns.Average(r => Math.Pow(r - mean, 2));
+    double variance = windowReturns.Sum(r => Math.Pow(r - mean, 2));
+    variance /= (dataInterval - 1); 
     return Math.Sqrt(variance);
   }
 
@@ -154,7 +64,7 @@ public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataPro
     var returns = new List<double>();
     for (int i = 1; i < prices.Count; i++)
     {
-      double ret = Math.Log(prices[i].Close / prices[i - 1].Close);
+      double ret = (prices[i].Close - prices[i - 1].Close) / prices[i-1].Close;
       returns.Add(ret);
     }
 
