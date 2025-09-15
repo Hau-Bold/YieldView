@@ -8,21 +8,44 @@ namespace YieldView.API.Controllers;
 [ApiController]
 public class SP500Controller(SP500DataProvider dataProvider) : ControllerBase
 {
-  [HttpGet]
-  public async Task<ActionResult<IEnumerable<SP500Price>>> Get([FromQuery] DateTime? from, [FromQuery] DateTime? to)
-  {
-    if (from == null || to == null)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<SP500Price>>> Get([FromQuery] DateTime? from, [FromQuery] DateTime? to)
     {
-      return BadRequest("Please provide both from and to dates.");
+        if (from == null || to == null)
+        {
+            return BadRequest("Please provide both from and to dates.");
+        }
+
+        var prices = await dataProvider.GetHistoricalPricesAsync(from.Value, to.Value);
+
+        if (prices.Count==0)
+        {
+            return NotFound("No prices found in the given date range.");
+        }
+
+        return Ok(prices);
     }
 
-    var prices = await dataProvider.GetHistoricalPricesAsync(from.Value, to.Value);
-
-    if (!prices.Any())
+    [HttpGet("volatility")]
+    public async Task<ActionResult<IEnumerable<SP500PriceWithVolatility>>> GetHistoricalPricesWithVolatility(
+        [FromQuery] DateTime from,
+        [FromQuery] DateTime to,
+        [FromQuery] int dataInterval)
     {
-      return NotFound("No prices found in the given date range.");
-    }
+        try
+        {
+            var results = await dataProvider.GetHistoricalPricesWithVolatilityAsync(from, to, dataInterval);
 
-    return Ok(prices);
-  }
+            if (results == null || results.Count == 0)
+            {
+                return NotFound($"No volatility data between {from:yyyy-MM-dd} and {to:yyyy-MM-dd}.");
+            }
+
+            return Ok(results);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 }

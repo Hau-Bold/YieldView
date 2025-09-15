@@ -8,53 +8,43 @@ namespace YieldView.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class YieldCurveController : ControllerBase
+public class YieldCurveController(YieldDbContext context, YieldSpreadProvider yieldSpreadProvider) : ControllerBase
 {
-      private readonly YieldDbContext _context;
-      private readonly YieldSpreadProvider yieldSpreadProvider;
-
-  public YieldCurveController(YieldDbContext context, YieldSpreadProvider yieldSpreadProvider)
-  {
-          _context = context;
-    this.yieldSpreadProvider = yieldSpreadProvider;
-  }
-
-  [HttpGet("{country}/{date}")]
-  public async Task<ActionResult<IEnumerable<YieldCurvePoint>>> GetYieldCurve(string country, DateTime date)
-  {
-
-    var startDate = date.Date; 
-    var endDate = startDate.AddDays(1); 
-
-    var points = await _context.USYieldCurvePoints
-        .Where(p => p.Country.ToUpper() == country.ToUpper()
-                    && p.Date >= startDate
-                    && p.Date < endDate)
-        .ToListAsync();
-
-    if (points == null || points.Count == 0)
-      return NotFound($"No data for {country} at {date:yyyy-MM-dd}.");
-
-    return Ok(points);
-  }
-
-  [HttpGet("spread/{country}/{from}/{to}")]
-  public async Task<ActionResult<IEnumerable<YieldSpread>>> GetYieldSpreads(
-          string country, DateTime from, DateTime to)
-  {
-    try
+    [HttpGet("{country}/{date}")]
+    public async Task<ActionResult<IEnumerable<YieldCurvePoint>>> GetYieldCurve(string country, DateTime date)
     {
-      var spreads = await yieldSpreadProvider.GetYieldSpreadsAsync(from, to, country);
-      if (spreads == null || spreads.Count == 0)
-      {
-        return NotFound($"No spread data for {country} between {from:yyyy-MM-dd} and {to:yyyy-MM-dd}.");
-      }
+        var startDate = date.Date;
+        var endDate = startDate.AddDays(1);
 
-      return Ok(spreads);
+        var points = await context.USYieldCurvePoints
+            .Where(p => p.Country.ToUpper() == country.ToUpper()
+                        && p.Date >= startDate
+                        && p.Date < endDate)
+            .ToListAsync();
+
+        if (points == null || points.Count == 0)
+            return NotFound($"No data for {country} at {date:yyyy-MM-dd}.");
+
+        return Ok(points);
     }
-    catch (ArgumentException ex)
+
+    [HttpGet("spread/{country}/{from}/{to}")]
+    public async Task<ActionResult<IEnumerable<YieldSpread>>> GetYieldSpreads(
+        string country, DateTime from, DateTime to)
     {
-      return BadRequest(ex.Message);
+        try
+        {
+            var spreads = await yieldSpreadProvider.GetYieldSpreadsAsync(from, to, country);
+            if (spreads == null || spreads.Count == 0)
+            {
+                return NotFound($"No spread data for {country} between {from:yyyy-MM-dd} and {to:yyyy-MM-dd}.");
+            }
+
+            return Ok(spreads);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
-  }
 }
