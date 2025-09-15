@@ -87,12 +87,6 @@ export class YieldCurveChartComponent implements OnInit {
   this.loadSp500Chart();
 }
 
-  onEpsChange(event: Event): void {
-  const target = event.target as HTMLInputElement;
-  this.eps = Number(target.value);
-  this.loadSp500Chart();
-}
-
   loadDataAndRenderChart(date: string) {
     this.yieldCurveService.getYieldCurve(this.country, date).subscribe(data => {
       const sortedData = data.sort(
