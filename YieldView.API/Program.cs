@@ -18,14 +18,18 @@ builder.Services.AddDbContext<YieldDbContext>(options
 builder.Services.Configure<YieldCurveSourcesConfig>(
     builder.Configuration.GetSection("YieldCurveSources"));
 
+builder.Services.AddScoped<SP500DataProvider>();
+builder.Services.AddScoped<YieldSpreadProvider>();
+builder.Services.AddScoped<StockDataProvider>();
+
 builder.Services.AddHttpClient<TreasuryXmlService>();
 builder.Services.AddHostedService<TreasuryXmlService>();
 
 builder.Services.AddHttpClient<SP500Service>();
 builder.Services.AddHostedService<SP500Service>();
 
-builder.Services.AddScoped<SP500DataProvider>();
-builder.Services.AddScoped<YieldSpreadProvider>();
+builder.Services.AddHttpClient<BiduStockService>();
+builder.Services.AddHostedService<BiduStockService>();
 
 var app = builder.Build();
 

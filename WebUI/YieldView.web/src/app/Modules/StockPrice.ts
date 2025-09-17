@@ -1,4 +1,4 @@
-export interface  BiduPrice
+export interface  StockPrice
 {
  dateTime: Date;
  open: number;
