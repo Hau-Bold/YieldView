@@ -1,0 +1,80 @@
+<!-- Navigation Bar -->
+<nav class="relative z-50 flex items-center justify-between px-2 py-3 bg-red-500 mb-3">
+  <div class="container px-4 mx-auto flex flex-wrap items-center justify-between">
+    <div class="w-full relative flex justify-between lg:w-auto px-4 lg:static lg:block lg:justify-start">
+      <div class="navbar-logo">
+        <h1 class="py-10 font-extrabold text-5xl text-white">
+          <span class="flex">
+            <img src="../../assets/angular-logo.png" alt="Logo" class="h-10 mr-2" />
+            YieldView
+          </span>
+        </h1>
+      </div>
+    </div>
+    <div class="lg:flex lg:flex-grow items-center">
+      <ul class="flex flex-col lg:flex-row list-none ml-auto">
+        <li class="nav-item">
+          <a class="px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75" routerLink="">
+            <span class="ml-2">Home</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75" routerLink="/yieldChart">
+            <span class="ml-2">Yield Curve</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Charts Layout -->
+<div class="grid grid-cols-1 gap-6 p-6">
+  <!-- Stock Chart Card -->
+  <div class="bg-white rounded-2xl shadow-lg p-6">
+    <h2 class="text-xl font-bold mb-4 text-gray-700">Stock Prices</h2>
+
+    <!-- Controls -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <!-- From Date -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">From</label>
+        <input type="date"
+          [(ngModel)]="from"
+           (change)="onDateFromChange($event)"
+          class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500" />
+      </div>
+
+      <!-- To Date -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">To</label>
+        <input
+           id ="stockFromPicker"
+           type="date"
+            [(ngModel)]="to"
+            (change)="onDateToChange($event)"
+          class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500" />
+      </div>
+
+      <!-- Stock Dropdown -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Stock</label>
+        <select [(ngModel)]="selectedStock"
+          class="border rounded-lg px-3 py-2 w-full rounded-md focus:outline-none focus:ring focus:ring-red-200">
+          <option value="bidu">Baidu (BIDU)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <canvas id="stockChart" class="w-full h-96"></canvas>
+
+    <!-- Actions -->
+    <div class="mt-6 flex justify-end">
+      <button (click)="detectPlateaus()"
+        class="px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition">
+        Detect Plateaus
+      </button>
+    </div>
+  </div>
+</div>

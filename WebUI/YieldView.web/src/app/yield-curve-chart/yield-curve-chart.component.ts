@@ -33,14 +33,13 @@ export class YieldCurveChartComponent implements OnInit {
 
   @Input() country = 'US';
   maturityOrder:string[] = ["1M", "1_5M",  "2M", "3M", "4M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"];
-  date: string  ='2025-08-08';
+  date: string;
   yieldCurveChart: any;
 
-  sp500FromDate:string = '2025-01-01';
-  sp500ToDate:string = '2025-08-08';
+  sp500FromDate:string;
+  sp500ToDate:string;
   volatilityWindowSize: number = 10; 
   volatilityThreshold: number = 0.0011;
-  eps: number = 0.1;
   sp500CurveChart: any;
   
   constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service)
