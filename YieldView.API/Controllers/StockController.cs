@@ -8,7 +8,6 @@ namespace YieldView.API.Controllers;
 [ApiController]
 public class StockController(StockDataProvider dataProvider) : Controller
 {
-  //http://localhost:5000/api/stock/bidu?from=2021-01-01&to=2025-01-01
   [HttpGet("bidu")]
   public async Task<ActionResult<IEnumerable<BiduStockPrice>>> Get([FromQuery] DateTime? from, [FromQuery] DateTime? to)
   {

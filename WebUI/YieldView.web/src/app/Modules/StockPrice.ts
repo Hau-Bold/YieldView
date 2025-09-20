@@ -1,6 +1,6 @@
 export interface  StockPrice
 {
- dateTime: Date;
+ date: string;
  open: number;
  high: number,
  low: number,
