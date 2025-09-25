@@ -28,7 +28,7 @@ public class BiduStockService(HttpClient httpClient, IOptions<YieldCurveSourcesC
 
     while (!cancellationToken.IsCancellationRequested)
     {
-      dbContext.BiduPrices.RemoveRange(dbContext.BiduPrices);
+        dbContext.BiduPrices.RemoveRange(dbContext.BiduPrices);
       await dbContext.SaveChangesAsync(cancellationToken);
 
       var csv = await httpClient.GetStringAsync(url, cancellationToken);

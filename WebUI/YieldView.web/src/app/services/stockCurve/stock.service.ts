@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 })
 export class StockService {
 
-  private baseUrl = 'http://localhost:7031/api/stock/';
+  private baseUrl = 'https://localhost:7031/api/stock/';
   constructor(private http: HttpClient) {}
 
    getPrices(stock:string, from: string, to: string): Observable<StockPrice[]> 

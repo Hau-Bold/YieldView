@@ -29,7 +29,7 @@
 </nav>
 
 <!-- Charts Layout -->
-<div class="grid grid-cols-1 gap-6 p-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
   <!-- Stock Chart Card -->
   <div class="bg-white rounded-2xl shadow-lg p-6">
     <h2 class="text-xl font-bold mb-4 text-gray-700">Stock Prices</h2>
@@ -41,40 +41,59 @@
         <label class="block text-sm font-medium text-gray-600 mb-1">From</label>
         <input type="date"
           [(ngModel)]="from"
-           (change)="onDateFromChange($event)"
+          (change)="onDateFromChange($event)"
           class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500" />
       </div>
 
       <!-- To Date -->
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">To</label>
-        <input
-           id ="stockFromPicker"
-           type="date"
-            [(ngModel)]="to"
-            (change)="onDateToChange($event)"
+        <input type="date"
+          [(ngModel)]="to"
+          (change)="onDateToChange($event)"
           class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500" />
       </div>
 
       <!-- Stock Dropdown -->
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Stock</label>
-        <select [(ngModel)]="selectedStock"
+        <select 
+          id="stockPicker"
+          [(ngModel)]="selectedStock"
+          (change)="onStockChange($event)"
           class="border rounded-lg px-3 py-2 w-full rounded-md focus:outline-none focus:ring focus:ring-red-200">
+          <option value="bidu">Baidu (BIDU)</option>
           <option value="bidu">Baidu (BIDU)</option>
         </select>
       </div>
     </div>
 
     <!-- Chart -->
-    <canvas id="stockChart" class="w-full h-96"></canvas>
+    <canvas id="stockCurveChart" class="w-full h-90"></canvas>
 
     <!-- Actions -->
-    <div class="mt-6 flex justify-end">
-      <button (click)="detectPlateaus()"
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 mt-6 flex justify-end">
+      <button (click)="togglePlateaus()"
         class="px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition">
-        Detect Plateaus
+        {{detectPlateausButtonLabel}}
+      </button>
+      <button (click)="toggleAveragedMean()"
+        class="px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition">
+        {{ averagedMeanButtonLabel }}
+      </button>
+      <button (click)="toggleCandels()"
+        class="px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition">
+        {{ candelsButtonLabel }}
+      </button>
+       <button (click)="toggleVolumes()"
+        class="px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition">
+        {{ volumesButtonLabel }}
       </button>
     </div>
+  </div>
+
+  <!-- Placeholder / Future Card -->
+  <div class="bg-white rounded-2xl shadow-lg p-6 flex items-center justify-center text-gray-400">
+    <span>More analytics coming soon…</span>
   </div>
 </div>

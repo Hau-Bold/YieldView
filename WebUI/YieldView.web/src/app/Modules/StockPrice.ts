@@ -6,4 +6,7 @@ export interface  StockPrice
  low: number,
  close: number,
  volume: number;
+ averagedClose : number;
+ gaussianAveragedClose: number;
+ plateauIndex : number;
 } 

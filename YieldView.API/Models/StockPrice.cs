@@ -16,6 +16,12 @@ public class StockPrice
     public double Close { get; set; }
 
     public long Volume { get; set; }
+
+    public double AveragedClose { get; set; }
+
+    public double GaussianAveragedClose { get; set; }
+
+    public int PlateauIndex { get; set; }
 }
 
 public class BiduStockPrice: StockPrice{ }

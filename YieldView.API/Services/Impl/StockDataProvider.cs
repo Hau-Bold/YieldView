@@ -20,8 +20,32 @@ public class StockDataProvider(IServiceScopeFactory scopeFactory)
 
     var dbSet = dbContext.Set<T>().AsQueryable();
 
-    return await dbSet.Where(p => p.Date >= from && p.Date <= to)
+    var stockData= await dbSet.Where(p => p.Date >= from && p.Date <= to)
                       .OrderBy(p => p.Date)
                       .ToListAsync();
+
+    // Todo: Maybe wrap in extension
+    double averageClose = 0;
+    int plateauIndex = 0;
+    int localGaussian = 0;
+    for (int i=0;i< stockData.Count;i++)
+    {
+      var current = stockData[i];
+      
+      averageClose += current.Close;
+      current.AveragedClose = averageClose / (i + 1);
+      var currentGaussian = (int)Math.Round(current.AveragedClose);
+
+      if(localGaussian != currentGaussian)
+      {
+        localGaussian = currentGaussian;
+        plateauIndex++;
+      }
+
+      current.GaussianAveragedClose = currentGaussian;
+      current.PlateauIndex = plateauIndex;
+    }
+
+    return stockData;
   }
 }
