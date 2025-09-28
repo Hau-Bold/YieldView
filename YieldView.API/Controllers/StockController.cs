@@ -9,7 +9,7 @@ namespace YieldView.API.Controllers;
 public class StockController(StockDataProvider dataProvider) : Controller
 {
   [HttpGet("bidu")]
-  public async Task<ActionResult<IEnumerable<BiduStockPrice>>> Get([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+  public async Task<ActionResult<IEnumerable<BiduStockPrice>>> GetBidu([FromQuery] DateTime? from, [FromQuery] DateTime? to)
   {
     if (from == null || to == null)
     {
@@ -17,6 +17,24 @@ public class StockController(StockDataProvider dataProvider) : Controller
     }
 
     var prices = await dataProvider.GetStockPricesAsync<BiduStockPrice>(from.Value, to.Value);
+
+    if (prices.Count == 0)
+    {
+      return NotFound("No prices found in the given date range.");
+    }
+
+    return Ok(prices);
+  }
+
+  [HttpGet("plug.us")]
+  public async Task<ActionResult<IEnumerable<PlugStockPrice>>> GetPlug([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+  {
+    if (from == null || to == null)
+    {
+      return BadRequest("Please provide both from and to dates.");
+    }
+
+    var prices = await dataProvider.GetStockPricesAsync<PlugStockPrice>(from.Value, to.Value);
 
     if (prices.Count == 0)
     {

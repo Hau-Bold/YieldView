@@ -31,6 +31,9 @@ builder.Services.AddHostedService<SP500Service>();
 builder.Services.AddHttpClient<BiduStockService>();
 builder.Services.AddHostedService<BiduStockService>();
 
+builder.Services.AddHttpClient<PlugStockService>();
+builder.Services.AddHostedService<PlugStockService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -25,6 +25,7 @@ export class StockCurveChartComponent implements OnInit {
   stockCurveChart: any;
   showAveragedMean = false; 
   showPlateaus = false;
+  minPlateauLength = 5;
   showCandels = false;
   showVolumes = false;
 
@@ -52,9 +53,18 @@ export class StockCurveChartComponent implements OnInit {
       this.loadAndRenderStockCurveChart(this.selectedStock,this.from,this.to); 
     }
 
+    onMinPlateauLengthChange(event: Event): void {
+      const target = event.target as HTMLInputElement;
+      this.minPlateauLength = parseInt(target.value, 10) || 5;
+      this.loadAndRenderStockCurveChart(this.selectedStock,this.from,this.to);
+    }
+
     onStockChange(event: Event):void {
        const target = event.target as HTMLInputElement;
         this.selectedStock = target.value;
+
+        console.log(`Stock changed to ${this.selectedStock}`);
+
          this.loadAndRenderStockCurveChart(this.selectedStock,this.from,this.to); 
         } 
   // #endregion
@@ -70,6 +80,11 @@ export class StockCurveChartComponent implements OnInit {
 
   togglePlateaus(): void {
     this.showPlateaus = !this.showPlateaus;
+
+    if(this.showPlateaus=== false)
+    {
+      this.minPlateauLength=5;
+    }
     this.loadAndRenderStockCurveChart(this.selectedStock, this.from, this.to);
   }
 
@@ -97,26 +112,12 @@ export class StockCurveChartComponent implements OnInit {
 
       let plateauDatasets: any[] = [];
       if (this.showPlateaus) {
-        const plateaus: Plateau[] = this.plateauService.detectPlateaus(data, 5);
+        const plateaus: Plateau[] = this.plateauService.detectPlateaus(data, this.minPlateauLength);
         plateauDatasets = this.createPlateauDatasets(labels, plateaus);
       }
 
       this.createStockChart(labels, prices,volumes, averagedData, plateauDatasets);
     });
-  }
-
-  private createPlateauDatasets(labels: string[], plateaus: Plateau[]) {
-    return plateaus.map(p => ({
-      label: `val: ${p.value}; Len: ${p.length}`,
-      data: labels.map(date => (date >= p.startDate && date <= p.endDate ? p.value : null)),
-      borderColor: 'green',
-      borderWidth: 2,
-      borderDash: [5, 5],
-      fill: false,
-      pointRadius: 0,
-      spanGaps: true,
-      datalabels: { display: false, align: 'start', anchor: 'start' }
-    }));
   }
 
   private createStockChart(labels: string[], prices: number[],volumes:number[], averagedData: number[], plateauDatasets: any[]) {
@@ -151,6 +152,21 @@ export class StockCurveChartComponent implements OnInit {
           legend: { display: true }
         }
       }
+
     });
+  }
+
+   private createPlateauDatasets(labels: string[], plateaus: Plateau[]) {
+    return plateaus.map(p => ({
+      label: `val: ${p.value}; Len: ${p.length}`,
+      data: labels.map(date => (date >= p.startDate && date <= p.endDate ? p.value : null)),
+      borderColor: 'green',
+      borderWidth: 2,
+      borderDash: [5, 5],
+      fill: false,
+      pointRadius: 0,
+      spanGaps: true,
+      datalabels: { display: false, align: 'start', anchor: 'start' }
+    }));
   }
 }

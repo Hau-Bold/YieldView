@@ -25,3 +25,5 @@ public class StockPrice
 }
 
 public class BiduStockPrice: StockPrice{ }
+
+public class PlugStockPrice : StockPrice { }
