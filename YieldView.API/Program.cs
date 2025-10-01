@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
+using YieldView.API.Services.Contract;
 using YieldView.API.Services.Impl;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,7 @@ builder.Services.Configure<YieldCurveSourcesConfig>(
 builder.Services.AddScoped<SP500DataProvider>();
 builder.Services.AddScoped<YieldSpreadProvider>();
 builder.Services.AddScoped<StockDataProvider>();
+builder.Services.AddTransient<ICSVStockParser, CSVStockParser>();
 
 builder.Services.AddHttpClient<TreasuryXmlService>();
 builder.Services.AddHostedService<TreasuryXmlService>();

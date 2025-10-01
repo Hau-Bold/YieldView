@@ -9,14 +9,14 @@ namespace YieldView.API.Controllers;
 public class StockController(StockDataProvider dataProvider) : Controller
 {
   [HttpGet("bidu")]
-  public async Task<ActionResult<IEnumerable<BiduStockPrice>>> GetBidu([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+  public async Task<ActionResult<IEnumerable<StockPrice>>> GetBidu([FromQuery] DateTime? from, [FromQuery] DateTime? to)
   {
     if (from == null || to == null)
     {
       return BadRequest("Please provide both from and to dates.");
     }
 
-    var prices = await dataProvider.GetStockPricesAsync<BiduStockPrice>(from.Value, to.Value);
+    var prices = await dataProvider.GetBiduStockPricesAsync(from.Value, to.Value);
 
     if (prices.Count == 0)
     {
@@ -27,14 +27,14 @@ public class StockController(StockDataProvider dataProvider) : Controller
   }
 
   [HttpGet("plug.us")]
-  public async Task<ActionResult<IEnumerable<PlugStockPrice>>> GetPlug([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+  public async Task<ActionResult<IEnumerable<StockPrice>>> GetPlug([FromQuery] DateTime? from, [FromQuery] DateTime? to)
   {
     if (from == null || to == null)
     {
       return BadRequest("Please provide both from and to dates.");
     }
 
-    var prices = await dataProvider.GetStockPricesAsync<PlugStockPrice>(from.Value, to.Value);
+    var prices = await dataProvider.GetPlugUSStockPricesAsync(from.Value, to.Value);
 
     if (prices.Count == 0)
     {

@@ -1,13 +1,12 @@
-
 using Microsoft.Extensions.Options;
-using System.Globalization;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
 using YieldView.API.Models;
+using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory)
+public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser)
   : BackgroundService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
@@ -18,7 +17,6 @@ public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesC
 
     if (!sources.TryGetValue("PLUG.US", out var sp500Source))
     {
-
       Console.WriteLine("No PLUG source configured.");
       return;
     }
@@ -31,38 +29,14 @@ public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesC
       dbContext.PlugPrices.RemoveRange(dbContext.PlugPrices);
       await dbContext.SaveChangesAsync(cancellationToken);
 
-      var csv = await httpClient.GetStringAsync(url, cancellationToken);
+      string? csv = await httpClient.GetStringAsync(url, cancellationToken);
 
-      var lines = csv.Split("\n").Skip(1);
-
-      foreach (var line in lines)
+      if(string.IsNullOrEmpty(csv))
       {
-        if (string.IsNullOrWhiteSpace(line))
-        {
-          continue;
-        }
-
-        var parts = line.Split(',');
-
-        if (DateTime.TryParse(parts[0], out var date) &&
-            double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out var open) &&
-            double.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out var high) &&
-            double.TryParse(parts[3], NumberStyles.Any, CultureInfo.InvariantCulture, out var low) &&
-            double.TryParse(parts[4], NumberStyles.Any, CultureInfo.InvariantCulture, out var close) &&
-            long.TryParse(parts[5], NumberStyles.Any, CultureInfo.InvariantCulture, out var volume)
-            )
-        {
-          dbContext.PlugPrices.Add(new PlugStockPrice
-          {
-            Date = date,
-            Open = open,
-            High = high,
-            Low = low,
-            Close = close,
-            Volume = volume
-          });
-        }
+        throw new InvalidOperationException("No PLUG data fetched");
       }
+
+      dbContext.PlugPrices.AddRange(stockParser.Parse<PlugStockPrice>(csv));
 
       await dbContext.SaveChangesAsync(cancellationToken);
       Console.WriteLine("finished loading PLUG data!");

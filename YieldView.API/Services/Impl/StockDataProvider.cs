@@ -6,21 +6,28 @@ namespace YieldView.API.Services.Impl;
 
 public class StockDataProvider(IServiceScopeFactory scopeFactory)
 {
-  public async Task<List<T>> GetStockPricesAsync<T>(DateTime? from = null, DateTime? to = null)
-         where T : StockPrice
+  public async Task<List<StockPrice>> GetBiduStockPricesAsync(DateTime from, DateTime to)
   {
-
-    if (!from.HasValue || !to.HasValue)
-    {
-      throw new ArgumentException("Both 'from' and 'to' dates must have a value.");
-    }
-
     using var scope = scopeFactory.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
+    var biduPrices = dbContext.BiduPrices.AsQueryable();
 
-    var dbSet = dbContext.Set<T>().AsQueryable();
+    return await GetStockPricesAsync(from, to, biduPrices);
+  }
 
-    var stockData= await dbSet.Where(p => p.Date >= from && p.Date <= to)
+  public async Task<List<StockPrice>> GetPlugUSStockPricesAsync(DateTime from, DateTime to)
+  {
+    using var scope = scopeFactory.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
+    var plugPrices = dbContext.PlugPrices.AsQueryable();
+
+    return await GetStockPricesAsync(from, to, plugPrices);
+  }
+
+
+  private static async Task<List<StockPrice>> GetStockPricesAsync(DateTime from, DateTime to, IQueryable<StockPrice> dbStockPrices)
+  {
+    var stockData= await dbStockPrices.Where(p => p.Date >= from && p.Date <= to)
                       .OrderBy(p => p.Date)
                       .ToListAsync();
 
