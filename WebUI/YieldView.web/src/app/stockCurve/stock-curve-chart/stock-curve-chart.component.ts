@@ -96,12 +96,7 @@ export class StockCurveChartComponent implements OnInit {
   toggleCandels() : void {
     this.showCandels = !this.showCandels;
 
-    if (this.showCandels) {
-    this.showAveragedMean = false;
-    this.showPlateaus = false;
-    this.showVolumes = false;
-    this.createCandlestickChart(this.selectedStock, this.from, this.to);
-  } 
+   this.loadAndRenderStockCurveChart(this.selectedStock, this.from, this.to);
   }
 
   toggleVolumes() : void {
@@ -115,121 +110,134 @@ export class StockCurveChartComponent implements OnInit {
   get volumesButtonLabel(){return this.showVolumes ? "Hide Volumes" : "Show Volumes";}
 
   loadAndRenderStockCurveChart(stock: string, from: string, to: string) {
-    this.stockService.getPrices(stock, from, to).subscribe((data: StockPrice[]) => {
-      const labels = data.map(d => d.date);
-      const prices = data.map(d => d.close);
-      const volumes = data.map(d => d.volume);
-      const averagedData = data.map(d => d.averagedClose);
+  this.stockService.getPrices(stock, from, to).subscribe((data: StockPrice[]) => {
 
-      let plateauDatasets: any[] = [];
-      if (this.showPlateaus) {
-        const plateaus: Plateau[] = this.plateauService.detectPlateaus(data, this.minPlateauLength);
-        plateauDatasets = this.createPlateauDatasets(labels, plateaus);
-      }
+    const prices = data.map((d, i) => ({ x: new Date(d.date), y: d.close }));
+    const volumes = data.map(d => ({ x: new Date(d.date), y: d.volume }));
+    const averagedData = data.map((d, i) => ({ x: new Date(d.date), y: d.averagedClose }));
 
-      this.createStockChart(labels, prices,volumes, averagedData, plateauDatasets);
-    });
-  }
-
-  private createStockChart(labels: string[], prices: number[],volumes:number[], averagedData: number[], plateauDatasets: any[]) {
-
-    if (this.stockCurveChart) 
-    {
-        this.stockCurveChart.destroy();
+    let plateauDatasets: any[] = [];
+    if (this.showPlateaus) {
+      const plateaus: Plateau[] = this.plateauService.detectPlateaus(data, this.minPlateauLength);
+      plateauDatasets = this.createPlateauDatasets( plateaus);
     }
 
-    const ctx = document.getElementById('stockCurveChart') as HTMLCanvasElement;
-
-    this.stockCurveChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          { label: `Stock Curve for ${this.selectedStock}`, data: prices, borderColor: 'blue', fill: false, tension: 0, pointRadius: 0, spanGaps: true },
-          { label: 'Averaged Mean', data: averagedData, borderColor: 'rgba(255, 99, 132, 1)', fill: false,  tension: 0, pointRadius: 0, spanGaps: true, hidden: !this.showAveragedMean },
-          ...plateauDatasets,
-          { label: 'Volume', data: volumes, type: 'bar', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderColor: 'rgba(0, 0, 0, 0.3)',  yAxisID: 'y1', hidden: !this.showVolumes       }
-        ]
-      },
-      options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-          y: { title: { display: true, text: 'Close' } },
-          y1: {title: { display: true, text: 'Volume' }, type: 'linear', position: 'right', grid: { drawOnChartArea: false } },
-          x: { title: { display: true, text: 'Date' }, ticks: { maxTicksLimit: 10 } }
-        },
-        plugins: {
-          legend: { display: true }
-        }
-      }
-
-    });
-  }
-
-   private createPlateauDatasets(labels: string[], plateaus: Plateau[]) {
-    return plateaus.map(p => ({
-      label: `val: ${p.value}; Len: ${p.length}`,
-      data: labels.map(date => (date >= p.startDate && date <= p.endDate ? p.value : null)),
-      borderColor: 'green',
-      borderWidth: 2,
-      borderDash: [5, 5],
-      fill: false,
-      pointRadius: 0,
-      spanGaps: true,
-      datalabels: { display: false, align: 'start', anchor: 'start' }
+    // Candlestick-Daten
+    const offset = 0.01;
+    const candles = data.map(d => ({
+      x: new Date(d.date),
+      o: d.open + offset,
+      h: d.high + offset,
+      l: d.low + offset,
+      c: d.close + offset
     }));
-  }
 
-  private createCandlestickChart(stock: string, from: string, to: string) {
-  this.stockService.getPrices(stock, from, to)
-    .subscribe((data: StockPrice[]) => {
+    console.log(JSON.stringify(candles));
 
-      const labels = data.map(d => new Date(d.date));
-     const candles = data.map(d => {
-  const date = new Date(d.date);
-  return {
-    x: new Date(date.getFullYear(), date.getMonth(), date.getDate()), // nur Tag
-    o: d.open,
-    h: d.high,
-    l: d.low,
-    c: d.close
-  };
-});
-      console.log(JSON.stringify(candles));
-
-      this.createCandleChart(labels,candles);
-    });
+    this.createStockChart(prices, volumes, averagedData, plateauDatasets, candles);
+  });
 }
 
-private createCandleChart(labels: Date[],candles: any[]) {
+private createStockChart(
+  prices: { x: Date; y: number }[],
+  volumes: { x: Date; y: number }[],
+  averagedData: { x: Date; y: number }[],
+  plateauDatasets: any[],
+  candles: { x: Date; o: number; h: number; l: number; c: number }[]
+) {
+  if (this.stockCurveChart) {
+    this.stockCurveChart.destroy();
+  }
+
   const ctx = document.getElementById('stockCurveChart') as HTMLCanvasElement;
 
-  if (this.stockCurveChart) this.stockCurveChart.destroy();
-
   this.stockCurveChart = new Chart(ctx, {
-    type: 'candlestick',
     data: {
-        labels,
-      datasets: [{
-        label: `Candles ${this.selectedStock}`,
-        data: candles,
-        barPercentage: 0.1,
-        categoryPercentage: 0.04,
-       borderColor: 'black',
-       backgroundColor: 'transparent',
-      }]
+      datasets: [
+        { label: `Candles ${this.selectedStock}`,  data: candles,  type: 'candlestick',  borderColor: 'black',yAxisID: 'y',parsing: false,  backgroundColor: 'transparent',hidden: !this.showCandels,barPercentage: 0.4, categoryPercentage: 0.1, },
+        { label: `Stock Curve for ${this.selectedStock}`, data: prices, type: 'line', borderColor: 'blue', fill: false, tension: 0, pointRadius: 0, spanGaps: true },
+        { label: 'Averaged Mean', data: averagedData, type: 'line', borderColor: 'rgba(255, 99, 132, 1)', fill: false, tension: 0, pointRadius: 0, spanGaps: true, hidden: !this.showAveragedMean },
+        ...plateauDatasets,
+        { label: 'Volume', data: volumes, type: 'bar', backgroundColor: 'rgba(0,0,0,0.2)', borderColor: 'rgba(0,0,0,0.3)', yAxisID: 'y1', hidden: !this.showVolumes, barPercentage: 0.02,  categoryPercentage: 0.6  }
+      ]
     },
     options: {
       responsive: true,
-      parsing: false, 
+      interaction: { mode: 'index', intersect: false },
       scales: {
-        x: { type: 'time', time: { unit: 'day',tooltipFormat: 'yyyy-MM-dd' },ticks: {source: 'data'}, title: { display: true, text: 'Date' } },
-        y: { title: { display: true, text: 'Price' } }
+        y: { title: { display: true, text: 'Close' } },
+        y1: { title: { display: true, text: 'Volume' }, type: 'linear', position: 'right', grid: { drawOnChartArea: false } },
+        x: {
+          type: 'time',
+          time: { unit: 'week', tooltipFormat: 'yyyy-MM-dd' },
+          ticks: { source: 'auto', maxTicksLimit: 10 },
+          title: { display: true, text: 'Date' }
+        }
       },
-      plugins: { legend: { display: true } }
-    }
-  });
+      plugins: {
+            tooltip: {
+      callbacks: {
+
+labelColor: (context) => {
+          if (context.dataset.type === 'candlestick') {
+            const candle = context.raw as { o: number; c: number };
+            const up = candle.c >= candle.o;
+            return { borderColor: up ? 'green' : 'red', backgroundColor: up ? 'green' : 'red' };
+          }
+          // sonst normale Dataset-Farbe
+          return {
+            borderColor: context.dataset.borderColor as string,
+            backgroundColor: context.dataset.borderColor as string
+          };
+        }
+      }
+    },
+         legend: {
+           display: true ,
+        //      labels:
+        //      { 
+        //              generateLabels: chart => {
+        //     return chart.data.datasets.map((dataset: any, i: number) => {
+        //       if (dataset.type === 'candlestick') {
+        //         const lastCandle = dataset.data[dataset.data.length - 1];
+        //         return {
+        //           text: dataset.label,
+        //           fillStyle: lastCandle.c >= lastCandle.o ? 'green' : 'red', 
+        //           strokeStyle: 'black',
+        //           lineWidth: 1,
+        //           hidden: !dataset.hidden,
+        //           datasetIndex: i
+        //         };
+        //       } else {
+        //         // normale Labels für andere Datasets
+        //         return Chart.defaults.plugins.legend.labels.generateLabels(chart)[i];
+        //       }
+        //     });
+        //   }
+        // }
+         
+          }
+  }
 }
+});
+}
+
+private createPlateauDatasets(plateaus: Plateau[]) {
+  return plateaus.map(p => ({
+    label: `val: ${p.value}; Len: ${p.length}`,
+    data: [
+      { x: p.startDate, y: p.value },
+      { x: p.endDate, y: p.value }
+    ],
+    type: 'line',
+    borderColor: 'green',
+    borderWidth: 2,
+    fill: false,
+    pointRadius: 0,
+    spanGaps: false,
+    yAxisID: 'y'
+  }));
+}
+
  
 }
