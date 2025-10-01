@@ -8,7 +8,12 @@ import { PlateauService } from '../../services/stockCurve/plateau.service';
 import { Plateau } from '../../Modules/Plateau';
 import { StockPrice } from '../../Modules/StockPrice';
 
-Chart.register(...registerables);
+import 'chartjs-chart-financial';
+import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
+import { Candle } from '../../Modules/Candle';
+import 'chartjs-adapter-date-fns'; 
+
+Chart.register(...registerables, CandlestickController, CandlestickElement);
 
 @Component({
   selector: 'app-stock-curve-chart',
@@ -90,7 +95,13 @@ export class StockCurveChartComponent implements OnInit {
 
   toggleCandels() : void {
     this.showCandels = !this.showCandels;
-    this.loadAndRenderStockCurveChart(this.selectedStock, this.from, this.to);
+
+    if (this.showCandels) {
+    this.showAveragedMean = false;
+    this.showPlateaus = false;
+    this.showVolumes = false;
+    this.createCandlestickChart(this.selectedStock, this.from, this.to);
+  } 
   }
 
   toggleVolumes() : void {
@@ -169,4 +180,56 @@ export class StockCurveChartComponent implements OnInit {
       datalabels: { display: false, align: 'start', anchor: 'start' }
     }));
   }
+
+  private createCandlestickChart(stock: string, from: string, to: string) {
+  this.stockService.getPrices(stock, from, to)
+    .subscribe((data: StockPrice[]) => {
+
+      const labels = data.map(d => new Date(d.date));
+     const candles = data.map(d => {
+  const date = new Date(d.date);
+  return {
+    x: new Date(date.getFullYear(), date.getMonth(), date.getDate()), // nur Tag
+    o: d.open,
+    h: d.high,
+    l: d.low,
+    c: d.close
+  };
+});
+      console.log(JSON.stringify(candles));
+
+      this.createCandleChart(labels,candles);
+    });
+}
+
+private createCandleChart(labels: Date[],candles: any[]) {
+  const ctx = document.getElementById('stockCurveChart') as HTMLCanvasElement;
+
+  if (this.stockCurveChart) this.stockCurveChart.destroy();
+
+  this.stockCurveChart = new Chart(ctx, {
+    type: 'candlestick',
+    data: {
+        labels,
+      datasets: [{
+        label: `Candles ${this.selectedStock}`,
+        data: candles,
+        barPercentage: 0.1,
+        categoryPercentage: 0.04,
+       borderColor: 'black',
+       backgroundColor: 'transparent',
+      }]
+    },
+    options: {
+      responsive: true,
+      parsing: false, 
+      scales: {
+        x: { type: 'time', time: { unit: 'day',tooltipFormat: 'yyyy-MM-dd' },ticks: {source: 'data'}, title: { display: true, text: 'Date' } },
+        y: { title: { display: true, text: 'Price' } }
+      },
+      plugins: { legend: { display: true } }
+    }
+  });
+}
+ 
 }
