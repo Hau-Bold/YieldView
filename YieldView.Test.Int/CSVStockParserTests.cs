@@ -4,11 +4,12 @@ using System;
 using YieldView.API.Models;
 using YieldView.API.Services.Impl;
 
-public class CSVStockParserTests
+[TestFixture(typeof(BiduStockPrice))]
+[TestFixture(typeof(PlugStockPrice))]
+public class CSVStockParserTests<T> where T : StockPrice, new()
 {
 
   private readonly CSVStockParser sut = new();
-  public class TestStockPrice : StockPrice { }
 
   [Test]
   public void Parse_ValidCsv_ReturnsParsedList()
@@ -19,7 +20,7 @@ public class CSVStockParserTests
                  "2023-01-02,106.0,112.1,104.7,110.9,2000000";
 
     // Act
-    var result = sut.Parse<TestStockPrice>(csv);
+    var result = sut.Parse<T>(csv);
 
     // Assert
     Assert.Multiple(() =>
@@ -42,7 +43,7 @@ public class CSVStockParserTests
     string csv = "Date,Open,High,Low,Close,Volume\n";
 
     // Act
-    var result = sut.Parse<TestStockPrice>(csv);
+    var result = sut.Parse<T>(csv);
 
     // Assert
     Assert.That(result, Is.Empty);
@@ -57,7 +58,7 @@ public class CSVStockParserTests
                  "2023-01-03,120.1,125.0,119.0,122.5,1500000";
 
     // Act
-    var result = sut.Parse<TestStockPrice>(csv);
+    var result = sut.Parse<T>(csv);
 
     // Assert
     Assert.That(result, Has.Count.EqualTo(1));
@@ -72,7 +73,7 @@ public class CSVStockParserTests
                  " 2023-01-04 , 130.0 , 135.0 , 128.5 , 133.2 , 2500000 ";
 
     // Act
-    var result = sut.Parse<TestStockPrice>(csv);
+    var result = sut.Parse<T>(csv);
 
     // Assert
     Assert.Multiple(() =>
