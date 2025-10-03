@@ -33,31 +33,31 @@ export class YieldCurveChartComponent implements OnInit {
 
   @Input() country = 'US';
   maturityOrder:string[] = ["1M", "1_5M",  "2M", "3M", "4M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"];
-  date: string  ='2025-08-08';
+  date: string;
   yieldCurveChart: any;
 
-  sp500FromDate:string = '2025-01-01';
-  sp500ToDate:string = '2025-08-08';
+  sp500FromDate:string;
+  sp500ToDate:string;
   volatilityWindowSize: number = 10; 
   volatilityThreshold: number = 0.0011;
-  eps: number = 0.1;
   sp500CurveChart: any;
   
   constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service)
-   {
+  {
     const today = new Date();
     this.date =   today.toISOString().split('T')[0]; 
 
     this.sp500ToDate = this.date; 
     this.sp500FromDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0]; 
-   }
+  }
 
   ngOnInit(): void {
     this.loadDataAndRenderChart(this.date);
-     this.loadSp500Chart();
+    this.loadSp500Chart();
   }
 
-   onDateChange(event: Event):void {
+  // #region Chart Event Handlers
+    onDateChange(event: Event):void {
     const target = event.target as HTMLInputElement;
     this.date = target.value;
     this.loadDataAndRenderChart(this.date);
@@ -86,6 +86,7 @@ export class YieldCurveChartComponent implements OnInit {
   this.volatilityThreshold = Number(target.value);
   this.loadSp500Chart();
 }
+// #endregion
 
   loadDataAndRenderChart(date: string) {
     this.yieldCurveService.getYieldCurve(this.country, date).subscribe(data => {
@@ -164,13 +165,10 @@ forkJoin({
 
 createSp500Chart(sp500Labels: string[], sp500Prices: number[], sp500Vols: number[], spreadData: (number | null)[],sp500Data: SP500PriceWithVolatility[]) {
  
-  const ctx = document.getElementById('sp500Chart') as HTMLCanvasElement;
-
-  if(this.sp500CurveChart)
-   {
-      this.sp500CurveChart.destroy();
-   }
-
+  
+  this.cleanupSP500Chart();
+  
+ const ctx = document.getElementById('sp500Chart') as HTMLCanvasElement;
  this.sp500CurveChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -278,4 +276,10 @@ createSp500Chart(sp500Labels: string[], sp500Prices: number[], sp500Vols: number
     }
   });
 }
+
+  private cleanupSP500Chart() {
+    if (this.sp500CurveChart) {
+      this.sp500CurveChart.destroy();
+    }
+  }
 }

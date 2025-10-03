@@ -7,8 +7,6 @@ namespace YieldView.API.Services.Impl;
 
 public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataProvider
 {
-  private readonly IServiceScopeFactory scopeFactory = scopeFactory;
-
   public async Task<List<SP500Price>> GetHistoricalPricesAsync(DateTime from, DateTime to)
   {
     using var scope = scopeFactory.CreateScope();

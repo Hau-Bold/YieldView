@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { SP500Service } from './sp500.service';
+import { PlateauService } from './plateau.service';
 
-describe('Sp500Service', () => {
-  let service: SP500Service;
+describe('PlateauService', () => {
+  let service: PlateauService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(SP500Service);
+    service = TestBed.inject(PlateauService);
   });
 
   it('should be created', () => {
