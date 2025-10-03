@@ -10,7 +10,6 @@ import { StockPrice } from '../../Modules/StockPrice';
 
 import 'chartjs-chart-financial';
 import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
-import { Candle } from '../../Modules/Candle';
 import 'chartjs-adapter-date-fns'; 
 
 Chart.register(...registerables, CandlestickController, CandlestickElement);
@@ -86,17 +85,17 @@ export class StockCurveChartComponent implements OnInit {
   togglePlateaus(): void {
     this.showPlateaus = !this.showPlateaus;
 
-    if(this.showPlateaus=== false)
+    if(this.showPlateaus === false)
     {
       this.minPlateauLength=5;
     }
+
     this.loadAndRenderStockCurveChart(this.selectedStock, this.from, this.to);
   }
 
   toggleCandels() : void {
     this.showCandels = !this.showCandels;
-
-   this.loadAndRenderStockCurveChart(this.selectedStock, this.from, this.to);
+    this.loadAndRenderStockCurveChart(this.selectedStock, this.from, this.to);
   }
 
   toggleVolumes() : void {
@@ -112,9 +111,9 @@ export class StockCurveChartComponent implements OnInit {
   loadAndRenderStockCurveChart(stock: string, from: string, to: string) {
   this.stockService.getPrices(stock, from, to).subscribe((data: StockPrice[]) => {
 
-    const prices = data.map((d, i) => ({ x: new Date(d.date), y: d.close }));
+    const prices = data.map(d => ({ x: new Date(d.date), y: d.close }));
     const volumes = data.map(d => ({ x: new Date(d.date), y: d.volume }));
-    const averagedData = data.map((d, i) => ({ x: new Date(d.date), y: d.averagedClose }));
+    const averagedData = data.map(d => ({ x: new Date(d.date), y: d.averagedClose }));
 
     let plateauDatasets: any[] = [];
     if (this.showPlateaus) {
@@ -122,17 +121,12 @@ export class StockCurveChartComponent implements OnInit {
       plateauDatasets = this.createPlateauDatasets( plateaus);
     }
 
-    // Candlestick-Daten
-    const offset = 0.01;
-    const candles = data.map(d => ({
+    const candles = data.map(d => ( {
       x: new Date(d.date),
-      o: d.open + offset,
-      h: d.high + offset,
-      l: d.low + offset,
-      c: d.close + offset
-    }));
-
-    console.log(JSON.stringify(candles));
+      o: d.open,
+      h: d.high,
+      l: d.low,
+      c: d.close } ));
 
     this.createStockChart(prices, volumes, averagedData, plateauDatasets, candles);
   });
@@ -143,7 +137,7 @@ private createStockChart(
   volumes: { x: Date; y: number }[],
   averagedData: { x: Date; y: number }[],
   plateauDatasets: any[],
-  candles: { x: Date; o: number; h: number; l: number; c: number }[]
+  candles: {x:Date,o:number,h:number,l:number,c:number}[]
 ) {
   if (this.stockCurveChart) {
     this.stockCurveChart.destroy();
@@ -184,7 +178,6 @@ labelColor: (context) => {
             const up = candle.c >= candle.o;
             return { borderColor: up ? 'green' : 'red', backgroundColor: up ? 'green' : 'red' };
           }
-          // sonst normale Dataset-Farbe
           return {
             borderColor: context.dataset.borderColor as string,
             backgroundColor: context.dataset.borderColor as string
@@ -192,31 +185,7 @@ labelColor: (context) => {
         }
       }
     },
-         legend: {
-           display: true ,
-        //      labels:
-        //      { 
-        //              generateLabels: chart => {
-        //     return chart.data.datasets.map((dataset: any, i: number) => {
-        //       if (dataset.type === 'candlestick') {
-        //         const lastCandle = dataset.data[dataset.data.length - 1];
-        //         return {
-        //           text: dataset.label,
-        //           fillStyle: lastCandle.c >= lastCandle.o ? 'green' : 'red', 
-        //           strokeStyle: 'black',
-        //           lineWidth: 1,
-        //           hidden: !dataset.hidden,
-        //           datasetIndex: i
-        //         };
-        //       } else {
-        //         // normale Labels für andere Datasets
-        //         return Chart.defaults.plugins.legend.labels.generateLabels(chart)[i];
-        //       }
-        //     });
-        //   }
-        // }
-         
-          }
+         legend: { display: true    }
   }
 }
 });

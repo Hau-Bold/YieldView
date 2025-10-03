@@ -4,7 +4,7 @@ import { StockService } from './stock.service';
 import { StockPrice } from '../../Modules/StockPrice';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 
-fdescribe('StockService', () => {
+describe('StockService', () => {
   let sut: StockService;
   let httpMock: HttpTestingController;
 
@@ -31,8 +31,8 @@ fdescribe('StockService', () => {
     const from = '2025-01-01';
     const to = '2025-01-10';
     const mockResponse: StockPrice[] = [
-      { date: '2025-01-01', open:23, high:20,low:10,  close: 150, volume:10 },
-      { date: '2025-01-02', open:23, high:20,low:10,  close: 153, volume:10}
+      { date: '2025-01-01', open:23, high:20,low:10,  close: 150, volume:10, averagedClose:20.1,gaussianAveragedClose:19.5, plateauIndex:0},
+      { date: '2025-01-02', open:23, high:20,low:10,  close: 153, volume:10, averagedClose:20.1,gaussianAveragedClose:19.5, plateauIndex:0}
     ];
 
     // Act
@@ -43,7 +43,7 @@ fdescribe('StockService', () => {
 
     // Assert
     const request = httpMock.expectOne(
-      `http://localhost:5000/api/stock/${mockStock}?from=${from}&to=${to}`
+      `https://localhost:7031/api/stock/${mockStock}?from=${from}&to=${to}`
     );
 
     expect(request.request.method).toBe('GET');
@@ -63,7 +63,7 @@ fdescribe('StockService', () => {
 
     // Assert
     const req = httpMock.expectOne(
-      `http://localhost:5000/api/stock/${mockStock}?from=${from}&to=${to}`
+      `https://localhost:7031/api/stock/${mockStock}?from=${from}&to=${to}`
     );
 
     req.flush([]);
