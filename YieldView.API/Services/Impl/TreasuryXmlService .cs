@@ -6,11 +6,10 @@ using YieldView.API.Data;
 using YieldView.API.Models;
 
 namespace YieldView.API.Services.Impl;
-public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory)
+public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ILogger<TreasuryXmlService> logger)
   : BackgroundService
 {
   private readonly YieldCurveSourcesConfig _sources = options.Value;
-  private TimeSpan FetchInterval;
 
   protected override async Task ExecuteAsync(CancellationToken cancellationToken)
   {
@@ -19,7 +18,7 @@ public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSource
 
     if (!_sources.TryGetValue("US", out var usSource))
     {
-      Console.WriteLine("US source not configured.");
+      logger.LogError("US source not configured.");
       return;
     }
     var fetchInterval = DataFetchHelper.GetDelayForInterval(usSource.FetchInterval);
@@ -40,10 +39,10 @@ public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSource
         }
         catch (Exception ex)
         {
-          Console.WriteLine($"Error loading US data for year {year}: {ex.Message}");
+          logger.LogError("Error loading US data for year {Year}: {Message}",year,ex.Message);
         }
 
-        Console.WriteLine($"Finished loading US data for year {year}");
+        logger.LogInformation("Finished loading US data for year {Year}",year);
       }
 
       await Task.Delay(fetchInterval, cancellationToken);
