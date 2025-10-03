@@ -7,7 +7,7 @@ using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class BiduStockService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser)
+public class BiduStockService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser,ILogger<BiduStockService>logger)
   : BackgroundService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
@@ -18,7 +18,7 @@ public class BiduStockService(HttpClient httpClient, IOptions<YieldCurveSourcesC
 
     if (!sources.TryGetValue("Bidu", out var sp500Source))
     {
-      Console.WriteLine("No Bidu source configured.");
+      logger.LogError("No Bidu source configured.");
       return;
     }
 
@@ -40,7 +40,7 @@ public class BiduStockService(HttpClient httpClient, IOptions<YieldCurveSourcesC
       dbContext.BiduPrices.AddRange(stockParser.Parse<BiduStockPrice>(csv));
 
       await dbContext.SaveChangesAsync(cancellationToken);
-      Console.WriteLine("finished loading BIDU data!");
+      logger.LogInformation("finished loading BIDU data!");
 
       await Task.Delay(fetchInterval, cancellationToken);
     }

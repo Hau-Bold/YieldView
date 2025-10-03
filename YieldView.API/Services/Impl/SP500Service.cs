@@ -6,7 +6,7 @@ using YieldView.API.Models;
 
 namespace YieldView.API.Services.Impl;
 
-public class SP500Service(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory)
+public class SP500Service(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ILogger<SP500Service> logger)
  : BackgroundService
 {
     private readonly YieldCurveSourcesConfig sources = options.Value;
@@ -59,7 +59,7 @@ public class SP500Service(HttpClient httpClient, IOptions<YieldCurveSourcesConfi
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);
-            Console.WriteLine("finished loading sp500 data!");
+            logger.LogInformation("finished loading sp500 data!");
 
             await Task.Delay(fetchInterval, cancellationToken);
         }

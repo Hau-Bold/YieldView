@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
@@ -6,7 +7,7 @@ using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser)
+public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser,ILogger<PlugStockService>logger)
   : BackgroundService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
@@ -17,7 +18,7 @@ public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesC
 
     if (!sources.TryGetValue("PLUG.US", out var sp500Source))
     {
-      Console.WriteLine("No PLUG source configured.");
+      logger.LogError("No PLUG source configured.");
       return;
     }
 
@@ -39,7 +40,7 @@ public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesC
       dbContext.PlugPrices.AddRange(stockParser.Parse<PlugStockPrice>(csv));
 
       await dbContext.SaveChangesAsync(cancellationToken);
-      Console.WriteLine("finished loading PLUG data!");
+      logger.LogInformation("finished loading PLUG data!");
 
       await Task.Delay(fetchInterval, cancellationToken);
     }
