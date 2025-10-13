@@ -352,16 +352,17 @@ createSp500Chart(sp500Labels: string[], sp500Prices: number[], sp500Vols: number
 }
 
 loadFredData() {
-
-  if (this.selectedDataset !== 'fred')
+  // TODO: why is the chart always redered?
+  if(this.selectedFredIndicator==='gdp')
   {
-    return;
-  } 
 
-  this.fredService.getPrices(this.fredFromDate, this.fredToDate)
-    .subscribe(data => {
-      this.renderFredChart(data);
-    });
+    console.log(`Loading FRED data for ${this.selectedFredIndicator} from ${this.fredFromDate} to ${this.fredToDate}`);
+
+    this.fredService.getPrices(this.fredFromDate, this.fredToDate)
+      .subscribe(data => {
+        this.renderFredChart(data);
+      });
+  }
 }
 
 renderFredChart(data: GPSPrice[]) {
