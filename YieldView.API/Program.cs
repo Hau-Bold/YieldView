@@ -5,6 +5,7 @@ using YieldView.API.Data;
 using YieldView.API.Logging;
 using YieldView.API.Services.Contract;
 using YieldView.API.Services.Impl;
+using YieldView.API.Services.Impl.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,10 +29,14 @@ builder.Services.Configure<YieldCurveSourcesConfig>(
 builder.Services.AddScoped<SP500DataProvider>();
 builder.Services.AddScoped<YieldSpreadProvider>();
 builder.Services.AddScoped<StockDataProvider>();
+builder.Services.AddScoped<GDPDataProvider>();
+
 builder.Services.AddTransient<ICSVStockParser, CSVStockParser>();
+builder.Services.AddTransient<IGDPParser, GDPParser>();
 
 builder.Services.AddHttpClient<TreasuryXmlService>();
 builder.Services.AddHostedService<TreasuryXmlService>();
+
 
 builder.Services.AddHttpClient<SP500Service>();
 builder.Services.AddHostedService<SP500Service>();
@@ -41,6 +46,9 @@ builder.Services.AddHostedService<BiduStockService>();
 
 builder.Services.AddHttpClient<PlugStockService>();
 builder.Services.AddHostedService<PlugStockService>();
+
+builder.Services.AddHttpClient<GrossDomesticProductService>();
+builder.Services.AddHostedService<GrossDomesticProductService>();
 
 var app = builder.Build();
 
