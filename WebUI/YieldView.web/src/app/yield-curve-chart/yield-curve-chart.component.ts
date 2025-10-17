@@ -14,6 +14,8 @@ import { SP500PriceWithVolatility } from '../Modules/SP500PriceWithVolatility';
 import { FredService } from '../services/yieldCurve/fred.service';
 import { GPSPrice } from '../Modules/GPSPrice';
 import { toISOString } from '../Utils/DateHelper';
+import { Wilshire5000Price } from '../Modules/Wilshire5000Price';
+import { BuffetIndicator } from '../Modules/BuffetIndicator';
 
 Chart.register(...registerables);
 
@@ -353,19 +355,112 @@ createSp500Chart(sp500Labels: string[], sp500Prices: number[], sp500Vols: number
 
 loadFredData() {
   // TODO: why is the chart always redered?
+  console.log(`Loading FRED data for ${this.selectedFredIndicator} from ${this.fredFromDate} to ${this.fredToDate}`);
+
+   if (this.fredCurveChart) {
+    this.fredCurveChart.destroy();
+  }
+
   if(this.selectedFredIndicator==='gdp')
   {
-
-    console.log(`Loading FRED data for ${this.selectedFredIndicator} from ${this.fredFromDate} to ${this.fredToDate}`);
-
-    this.fredService.getPrices(this.fredFromDate, this.fredToDate)
+    this.fredService.getGDPPrices(this.fredFromDate, this.fredToDate)
       .subscribe(data => {
-        this.renderFredChart(data);
+        console.log('FRED GDP data received:', data);
+        this.renderGDPChart(data);
       });
-  }
+      return;
+   }
+   else if(this.selectedFredIndicator==='wilshire5000')
+   {
+ this.fredService.getW5000Prices(this.fredFromDate, this.fredToDate)
+      .subscribe(data => {
+        this.renderW5000Chart(data);
+      });
+   }
+  else if(this.selectedFredIndicator==='buffett')
+   {
+     this.fredService.getBuffetIndicatorPrices(this.fredFromDate, this.fredToDate)
+      .subscribe(data => {
+        this.renderBuffetIndicatorChart(data);
+      });
+   }
 }
 
-renderFredChart(data: GPSPrice[]) {
+renderGDPChart(data: GPSPrice[]) {
+  const labels = data.map(d => d.date.split('T')[0]);
+  const values = data.map(d => d.value);
+
+  const ctx = document.getElementById('fredChart') as HTMLCanvasElement;
+
+  this.fredCurveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: `${this.selectedFredIndicator.toUpperCase()}`,
+        data: values,
+        borderColor: 'orange',
+        fill: false,
+        tension: 0.2,
+        pointRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: { title: { display: true, text: 'Value' } },
+         x: {
+          type: 'time',
+          time: { unit: 'week', tooltipFormat: 'yyyy-MM-dd' },
+          ticks: { source: 'auto', maxTicksLimit: 10 },
+          title: { display: true, text: 'Date' }
+        }
+      }
+    }
+  });
+}
+
+renderW5000Chart(data: Wilshire5000Price[]) {
+  const labels = data.map(d => d.date.split('T')[0]);
+  const values = data.map(d => d.value);
+
+  const ctx = document.getElementById('fredChart') as HTMLCanvasElement;
+ 
+  if (this.fredCurveChart) {
+    this.fredCurveChart.destroy();
+  }
+
+  this.fredCurveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: `${this.selectedFredIndicator.toUpperCase()}`,
+        data: values,
+        borderColor: '#8A2BE2',
+        fill: false,
+        tension: 0.2,
+        pointRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: { title: { display: true, text: 'Value' } },
+         x: {
+          type: 'time',
+          time: { unit: 'week', tooltipFormat: 'yyyy-MM-dd' },
+          ticks: { source: 'auto', maxTicksLimit: 10 },
+          title: { display: true, text: 'Date' }
+        }
+      }
+    }
+  });
+}
+
+renderBuffetIndicatorChart(data: BuffetIndicator[]) {
   const labels = data.map(d => d.date.split('T')[0]);
   const values = data.map(d => d.value);
 
@@ -382,7 +477,7 @@ renderFredChart(data: GPSPrice[]) {
       datasets: [{
         label: `${this.selectedFredIndicator.toUpperCase()}`,
         data: values,
-        borderColor: 'orange',
+        borderColor: '#FFD700',
         fill: false,
         tension: 0.2,
         pointRadius: 2,

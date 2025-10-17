@@ -7,7 +7,7 @@ using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser,ILogger<PlugStockService>logger)
+public class PlugStockService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser,ILogger<PlugStockService>logger)
   : BackgroundService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
@@ -22,6 +22,7 @@ public class PlugStockService(HttpClient httpClient, IOptions<YieldCurveSourcesC
       return;
     }
 
+    var httpClient = httpClientFactory.CreateClient("default");
     var fetchInterval = DataFetchHelper.GetDelayForInterval(sp500Source.FetchInterval);
     var url = $"{sp500Source.BaseUrl}";
 

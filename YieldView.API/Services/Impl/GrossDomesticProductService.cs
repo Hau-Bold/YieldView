@@ -7,7 +7,7 @@ using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class GrossDomesticProductService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, IGDPParser gdpParser,ILogger<BiduStockService>logger)
+public class GrossDomesticProductService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, IGDPParser gdpParser,ILogger<GrossDomesticProductService> logger)
   : BackgroundService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
@@ -22,6 +22,7 @@ public class GrossDomesticProductService(HttpClient httpClient, IOptions<YieldCu
       return;
     }
 
+    var httpClient = httpClientFactory.CreateClient("default");
     var fetchInterval = DataFetchHelper.GetDelayForInterval(gdpSource.FetchInterval);
     var url = $"{gdpSource.BaseUrl}";
 

@@ -37,7 +37,7 @@ describe('FredService', () => {
     const from = '2025-01-01';
     const to = '2025-02-01';
 
-    service.getPrices(from, to).subscribe((data) => {
+    service.getGDPPrices(from, to).subscribe((data) => {
       expect(data).toEqual(mockData);
     });
 
@@ -53,7 +53,7 @@ describe('FredService', () => {
     const from = '2025-01-01';
     const to = '2025-02-01';
 
-    service.getPrices(from, to).subscribe((data) => {
+    service.getGDPPrices(from, to).subscribe((data) => {
       expect(data.length).toBe(0);
     });
 

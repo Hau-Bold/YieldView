@@ -6,7 +6,7 @@ using YieldView.API.Models;
 
 namespace YieldView.API.Services.Impl;
 
-public class SP500Service(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ILogger<SP500Service> logger)
+public class SP500Service(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ILogger<SP500Service> logger)
  : BackgroundService
 {
     private readonly YieldCurveSourcesConfig sources = options.Value;
@@ -22,8 +22,9 @@ public class SP500Service(HttpClient httpClient, IOptions<YieldCurveSourcesConfi
         }
 
         var fetchInterval = DataFetchHelper.GetDelayForInterval(sp500Source.FetchInterval);
+        var httpClient = httpClientFactory.CreateClient("default");
 
-        while (!cancellationToken.IsCancellationRequested)
+    while (!cancellationToken.IsCancellationRequested)
         {
             dbContext.SP500Prices.RemoveRange(dbContext.SP500Prices);
             await dbContext.SaveChangesAsync(cancellationToken);

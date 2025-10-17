@@ -6,7 +6,7 @@ using YieldView.API.Data;
 using YieldView.API.Models;
 
 namespace YieldView.API.Services.Impl;
-public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ILogger<TreasuryXmlService> logger)
+public class TreasuryXmlService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ILogger<TreasuryXmlService> logger)
   : BackgroundService
 {
   private readonly YieldCurveSourcesConfig _sources = options.Value;
@@ -22,6 +22,7 @@ public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSource
       return;
     }
     var fetchInterval = DataFetchHelper.GetDelayForInterval(usSource.FetchInterval);
+    var httpClient = httpClientFactory.CreateClient("default");
 
     while (!cancellationToken.IsCancellationRequested)
     {
@@ -33,7 +34,7 @@ public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSource
         var fullUrl = $"{usSource.BaseUrl}={year}";
         try
         {
-          var points = await DownloadAndParseYieldCurveAsync("US", fullUrl);
+          var points = await DownloadAndParseYieldCurveAsync(httpClient,"US", fullUrl);
           await dbContext.USYieldCurvePoints.AddRangeAsync(points, cancellationToken);
           await dbContext.SaveChangesAsync(cancellationToken);
         }
@@ -49,7 +50,7 @@ public class TreasuryXmlService(HttpClient httpClient, IOptions<YieldCurveSource
     }
   }
 
-  private async Task<List<YieldCurvePoint>> DownloadAndParseYieldCurveAsync(string country, string url)
+  private async Task<List<YieldCurvePoint>> DownloadAndParseYieldCurveAsync(HttpClient httpClient,string country, string url)
   {
     var xml = await httpClient.GetStringAsync(url);
     var doc = XDocument.Parse(xml);
