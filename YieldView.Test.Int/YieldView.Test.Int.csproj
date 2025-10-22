@@ -2,11 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\YieldView.API\YieldView.API.csproj" />
+    <ProjectReference Include="..\YieldView.Test.sdk\YieldView.Test.sdk.csproj" />
   </ItemGroup>
 
   <ItemGroup>
