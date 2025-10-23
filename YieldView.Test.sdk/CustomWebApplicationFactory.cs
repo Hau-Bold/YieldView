@@ -5,14 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
 using YieldView.API.Data;
 
-namespace YieldView.Test.sdk;
+namespace YieldView.API.Test.sdk;
 
 internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-  public CustomWebApplicationFactory() { }
+
+  private readonly string dbName = Guid.NewGuid().ToString();
 
   /// <summary>
   /// Workaround for ASP.Net core  bug https://github.com/dotnet/aspnetcore/issues/40271
@@ -24,22 +24,14 @@ internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
     hostLifetimeService.StopApplication();
   }
 
-  internal HttpClient StartApplication() => CreateClient();
+  internal HttpClient StartApplication()
+      => CreateClient();
 
   protected override IHost CreateHost(IHostBuilder builder)
   {
-
-    var contentRoot = GetProjectPath("YieldView.API");
-    builder.UseContentRoot(contentRoot);
-
-
-    CopyDepsJson(contentRoot);
-
-
     ConfigureAppSettings(builder);
-
-
     ClearDatabase(builder);
+
 
     return base.CreateHost(builder);
   }
@@ -67,7 +59,13 @@ internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
         services.Remove(descriptor);
 
       services.AddDbContext<YieldDbContext>(options =>
-          options.UseInMemoryDatabase("TestDb"));
+          options.UseInMemoryDatabase(dbName));
+
+      var sp = services.BuildServiceProvider();
+      using var scope = sp.CreateScope();
+      var ctx = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
+      ctx.Database.EnsureDeleted();
+      ctx.Database.EnsureCreated();
     });
   }
 
@@ -75,35 +73,15 @@ internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
   {
     builder.ConfigureAppConfiguration(config =>
     {
-      config.AddInMemoryCollection(new Dictionary<string, string?> { });
+      config.AddInMemoryCollection(new Dictionary<string, string?>
+      {
+
+      });
     });
   }
 
-  private static void CopyDepsJson(string contentRoot)
+  internal new void Dispose()
   {
-    var depsSource = Path.Combine(contentRoot, "bin", "Debug", "net8.0", "testhost.deps.json");
-    var depsDest = Path.Combine(AppContext.BaseDirectory, "testhost.deps.json");
-
-    if (!File.Exists(depsDest) && File.Exists(depsSource))
-    {
-      File.Copy(depsSource, depsDest, overwrite: true);
-    }
-  }
-
-  internal new void Dispose() => base.Dispose();
-
-  private static string GetProjectPath(string projectName)
-  {
-    var dir = Directory.GetCurrentDirectory();
-    while (!string.IsNullOrEmpty(dir))
-    {
-      var potential = Path.Combine(dir, projectName);
-      if (Directory.Exists(potential))
-        return potential;
-
-      dir = Directory.GetParent(dir)?.FullName ?? "";
-    }
-
-    throw new DirectoryNotFoundException($"Projektordner '{projectName}' konnte nicht gefunden werden.");
+    base.Dispose();
   }
 }

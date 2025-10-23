@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
 using YieldView.API.Logging;

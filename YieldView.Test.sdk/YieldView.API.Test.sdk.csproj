@@ -8,17 +8,16 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.0" />
-    <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="17.8.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="YieldView.Test.Unit" />
-    <InternalsVisibleTo Include="YieldView.Test.Int" />
+    <ProjectReference Include="..\YieldView.API\YieldView.API.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\YieldView.API\YieldView.API.csproj" />
+    <InternalsVisibleTo Include="YieldView.API.Test.Unit" />
+    <InternalsVisibleTo Include="YieldView.API.Test.Int" />
   </ItemGroup>
 
 </Project>

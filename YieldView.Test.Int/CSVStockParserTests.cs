@@ -1,4 +1,4 @@
-namespace YieldView.Test.Int;
+namespace YieldView.API.Test.Int;
 
 using System;
 using YieldView.API.Models;
@@ -62,7 +62,7 @@ public class CSVStockParserTests<T> where T : StockPrice, new()
 
     // Assert
     Assert.That(result, Has.Count.EqualTo(1));
-    Assert.That(result[0].Date,Is.EqualTo(new DateTime(2023, 1, 3)));
+    Assert.That(result[0].Date, Is.EqualTo(new DateTime(2023, 1, 3)));
   }
 
   [Test]

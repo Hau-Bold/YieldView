@@ -4,10 +4,8 @@ using YieldView.API.Data;
 using YieldView.API.Models;
 using YieldView.API.Services.Impl.Providers;
 
-namespace YieldView.Test.Int.Impl.Providers;
+namespace YieldView.API.Test.Int.Impl.Providers;
 
-
-[TestFixture]
 public class FREDDataProviderTests
 {
   private ServiceProvider serviceProvider = null!;

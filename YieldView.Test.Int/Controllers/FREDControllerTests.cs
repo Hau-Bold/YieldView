@@ -3,20 +3,24 @@ using System.Net;
 using System.Net.Http.Json;
 using YieldView.API.Data;
 using YieldView.API.Models;
-using YieldView.Test.sdk;
+using YieldView.API.Test.sdk;
 
-namespace YieldView.Test.Int.Controllers;
+namespace YieldView.API.Test.Int.Controllers;
 
-public class FREDControllerComponentTests
+public class FREDControllerTests
 {
   private CustomWebApplicationFactory factory;
+  private HttpClient client;
 
   [SetUp]
   public void SetUp()
   {
     factory = new CustomWebApplicationFactory();
+    client = factory.CreateClient();
 
     using var scope = factory.Services.CreateScope();
+
+
     var db = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
 
     db.GDPPrices.AddRange(
@@ -39,6 +43,7 @@ public class FREDControllerComponentTests
   [TearDown]
   public void TearDown()
   {
+    client?.Dispose();
     factory?.Stopapplication();
     factory?.Dispose();
   }
@@ -49,7 +54,6 @@ public class FREDControllerComponentTests
     // Arrange
     var from = new DateTime(2020, 1, 1).ToString("yyyy-MM-dd");
     var to = new DateTime(2022, 12, 31).ToString("yyyy-MM-dd");
-    using var client = factory.CreateClient();
 
     // Act
     var response = await client.GetAsync($"/api/fred/gdp?from={from}&to={to}");
@@ -70,8 +74,7 @@ public class FREDControllerComponentTests
   [Test]
   public async Task GetGDP_Returns_BadRequest_WhenMissingDates()
   {
-    // Arrange & Act
-    using var client = factory.CreateClient();
+    // Act
     var response = await client.GetAsync("/api/fred/gdp");
 
     // Assert
@@ -86,7 +89,6 @@ public class FREDControllerComponentTests
     // Arrange
     var from = new DateTime(2010, 1, 1).ToString("yyyy-MM-dd");
     var to = new DateTime(2011, 1, 1).ToString("yyyy-MM-dd");
-    using var client = factory.CreateClient();
 
     // Act
     var response = await client.GetAsync($"/api/fred/gdp?from={from}&to={to}");
@@ -101,7 +103,6 @@ public class FREDControllerComponentTests
     // Arrange
     var from = new DateTime(2020, 1, 1).ToString("yyyy-MM-dd");
     var to = new DateTime(2022, 12, 31).ToString("yyyy-MM-dd");
-    using var client = factory.CreateClient();
 
     // Act
     var response = await client.GetAsync($"/api/fred/w5000?from={from}&to={to}");
@@ -124,7 +125,6 @@ public class FREDControllerComponentTests
     // Arrange
     var from = new DateTime(2030, 1, 1).ToString("yyyy-MM-dd");
     var to = new DateTime(2031, 1, 1).ToString("yyyy-MM-dd");
-    using var client = factory.CreateClient();
 
     // Act
     var response = await client.GetAsync($"/api/fred/w5000?from={from}&to={to}");
@@ -140,7 +140,6 @@ public class FREDControllerComponentTests
     // Arrange
     var from = new DateTime(2020, 1, 1).ToString("yyyy-MM-dd");
     var to = new DateTime(2022, 1, 1).ToString("yyyy-MM-dd");
-    using var client = factory.CreateClient();
 
     // Act
     var response = await client.GetAsync($"/api/fred/buffett-indicator?from={from}&to={to}");
@@ -165,7 +164,6 @@ public class FREDControllerComponentTests
     // Arrange
     var from = new DateTime(2010, 1, 1).ToString("yyyy-MM-dd");
     var to = new DateTime(2011, 1, 1).ToString("yyyy-MM-dd");
-    using var client = factory.CreateClient();
 
     // Act
     var response = await client.GetAsync($"/api/fred/buffett-indicator?from={from}&to={to}");

@@ -49,12 +49,16 @@ public class FREDController(FREDDataProvider dataProvider) : Controller
     [FromQuery] DateTime? from, [FromQuery] DateTime? to)
   {
     if (from == null || to == null)
+    {
       return BadRequest("Please provide both from and to dates.");
+    }
 
     var data = await dataProvider.GetBuffettIndicatorAsync(from.Value, to.Value);
 
     if (data.Count == 0)
+    {
       return NotFound("No Buffett Indicator data found for the given range.");
+    }
 
     return Ok(data);
   }

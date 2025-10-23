@@ -25,7 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\YieldView.API\YieldView.API.csproj" />
-    <ProjectReference Include="..\YieldView.Test.sdk\YieldView.Test.sdk.csproj" />
+    <ProjectReference Include="..\YieldView.Test.sdk\YieldView.API.Test.sdk.csproj" />
   </ItemGroup>
 
   <ItemGroup>

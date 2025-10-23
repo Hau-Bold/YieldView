@@ -17,6 +17,7 @@
     <InternalsVisibleTo Include="$(AssemblyName).Test.Unit" />
     <InternalsVisibleTo Include="$(AssemblyName).Test.Int" />
     <InternalsVisibleTo Include="$(AssemblyName).Test.sdk" />
+    <InternalsVisibleTo Include="YieldView.Test.sdk" />
   </ItemGroup>
 
 </Project>
