@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
+using YieldView.API.Extensions;
 using YieldView.API.Logging;
 using YieldView.API.Services.Contract;
 using YieldView.API.Services.Impl;
@@ -45,26 +46,14 @@ builder.Services.AddTransient<ICSVStockParser, CSVStockParser>();
 builder.Services.AddTransient<IGDPParser, GDPParser>();
 builder.Services.AddTransient<IWilshireParser, WilshireParser>();
 
-builder.Services.AddHttpClient<TreasuryXmlService>();
-builder.Services.AddHostedService<TreasuryXmlService>();
 
+builder.Services.AddBackgroundServiceWithInterface<TreasuryXmlService, ITreasuryXmlService>();
+builder.Services.AddBackgroundServiceWithInterface<SP500Service, ISP500Service>();
+builder.Services.AddBackgroundServiceWithInterface<BiduStockService, IBiduStockService>();
+builder.Services.AddBackgroundServiceWithInterface<PlugStockService, IPlugStockService>();
+builder.Services.AddBackgroundServiceWithInterface<WilshireService, IWilshireService>();
+builder.Services.AddBackgroundServiceWithInterface<GrossDomesticProductService, IGrossDomesticProductService>();
 
-builder.Services.AddHttpClient<SP500Service>();
-builder.Services.AddHostedService<SP500Service>();
-builder.Services.AddSingleton<ISP500Service>(sp =>
-    sp.GetRequiredService<SP500Service>());
-
-builder.Services.AddHttpClient<BiduStockService>();
-builder.Services.AddHostedService<BiduStockService>();
-
-builder.Services.AddHttpClient<PlugStockService>();
-builder.Services.AddHostedService<PlugStockService>();
-
-builder.Services.AddHttpClient<GrossDomesticProductService>();
-builder.Services.AddHostedService<GrossDomesticProductService>();
-
-builder.Services.AddHttpClient<WilshireService>();
-builder.Services.AddHostedService<WilshireService>();
 
 var app = builder.Build();
 

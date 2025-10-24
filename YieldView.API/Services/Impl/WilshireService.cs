@@ -1,13 +1,12 @@
 using Microsoft.Extensions.Options;
-using System.Net.Http;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
 using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class WilshireService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, IWilshireParser wilshireParser,ILogger<WilshireService> logger)
-  : BackgroundService
+public class WilshireService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, IWilshireParser wilshireParser, ILogger<WilshireService> logger)
+  : BackgroundService, IWilshireService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
   protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -26,7 +25,7 @@ public class WilshireService(IHttpClientFactory httpClientFactory, IOptions<Yiel
 
     while (!cancellationToken.IsCancellationRequested)
     {
-        dbContext.WilshirePrices.RemoveRange(dbContext.WilshirePrices);
+      dbContext.WilshirePrices.RemoveRange(dbContext.WilshirePrices);
       await dbContext.SaveChangesAsync(cancellationToken);
 
 

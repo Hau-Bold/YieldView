@@ -7,8 +7,8 @@ using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class GrossDomesticProductService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, IGDPParser gdpParser,ILogger<GrossDomesticProductService> logger)
-  : BackgroundService
+public class GrossDomesticProductService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, IGDPParser gdpParser, ILogger<GrossDomesticProductService> logger)
+  : BackgroundService, IGrossDomesticProductService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
   protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -28,7 +28,7 @@ public class GrossDomesticProductService(IHttpClientFactory httpClientFactory, I
 
     while (!cancellationToken.IsCancellationRequested)
     {
-        dbContext.GDPPrices.RemoveRange(dbContext.GDPPrices);
+      dbContext.GDPPrices.RemoveRange(dbContext.GDPPrices);
       await dbContext.SaveChangesAsync(cancellationToken);
 
       string? csv = await httpClient.GetStringAsync(url, cancellationToken);

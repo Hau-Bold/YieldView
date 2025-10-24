@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
@@ -7,8 +6,8 @@ using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class PlugStockService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser,ILogger<PlugStockService>logger)
-  : BackgroundService
+public class PlugStockService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser, ILogger<PlugStockService> logger)
+  : BackgroundService, IPlugStockService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
   protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -33,7 +32,7 @@ public class PlugStockService(IHttpClientFactory httpClientFactory, IOptions<Yie
 
       string? csv = await httpClient.GetStringAsync(url, cancellationToken);
 
-      if(string.IsNullOrEmpty(csv))
+      if (string.IsNullOrEmpty(csv))
       {
         throw new InvalidOperationException("No PLUG data fetched");
       }

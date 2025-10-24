@@ -1,13 +1,14 @@
+using Microsoft.Extensions.Options;
 using System.Globalization;
 using System.Xml.Linq;
-using Microsoft.Extensions.Options;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
 using YieldView.API.Models;
+using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 public class TreasuryXmlService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ILogger<TreasuryXmlService> logger)
-  : BackgroundService
+  : BackgroundService, ITreasuryXmlService
 {
   private readonly YieldCurveSourcesConfig _sources = options.Value;
 
@@ -34,23 +35,23 @@ public class TreasuryXmlService(IHttpClientFactory httpClientFactory, IOptions<Y
         var fullUrl = $"{usSource.BaseUrl}={year}";
         try
         {
-          var points = await DownloadAndParseYieldCurveAsync(httpClient,"US", fullUrl);
+          var points = await DownloadAndParseYieldCurveAsync(httpClient, "US", fullUrl);
           await dbContext.USYieldCurvePoints.AddRangeAsync(points, cancellationToken);
           await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex)
         {
-          logger.LogError("Error loading US data for year {Year}: {Message}",year,ex.Message);
+          logger.LogError("Error loading US data for year {Year}: {Message}", year, ex.Message);
         }
 
-        logger.LogInformation("Finished loading US data for year {Year}",year);
+        logger.LogInformation("Finished loading US data for year {Year}", year);
       }
 
       await Task.Delay(fetchInterval, cancellationToken);
     }
   }
 
-  private async Task<List<YieldCurvePoint>> DownloadAndParseYieldCurveAsync(HttpClient httpClient,string country, string url)
+  private async Task<List<YieldCurvePoint>> DownloadAndParseYieldCurveAsync(HttpClient httpClient, string country, string url)
   {
     var xml = await httpClient.GetStringAsync(url);
     var doc = XDocument.Parse(xml);
