@@ -5,12 +5,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Moq;
 using YieldView.API.Data;
+using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Test.sdk;
 
 internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
+  private readonly Mock<ISP500Service> sP500Service;
+
+  public CustomWebApplicationFactory(Mock<ISP500Service>? sP500Service = null)
+  {
+    this.sP500Service = sP500Service ?? new Mock<ISP500Service>();
+  }
 
   private readonly string dbName = Guid.NewGuid().ToString();
 
@@ -56,7 +64,9 @@ internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
           d => d.ServiceType == typeof(DbContextOptions<YieldDbContext>));
 
       if (descriptor != null)
+      {
         services.Remove(descriptor);
+      }
 
       services.AddDbContext<YieldDbContext>(options =>
           options.UseInMemoryDatabase(dbName));
@@ -66,6 +76,9 @@ internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
       var ctx = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
       ctx.Database.EnsureDeleted();
       ctx.Database.EnsureCreated();
+
+
+      services.AddSingleton(sP500Service.Object);
     });
   }
 

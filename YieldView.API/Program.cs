@@ -51,6 +51,8 @@ builder.Services.AddHostedService<TreasuryXmlService>();
 
 builder.Services.AddHttpClient<SP500Service>();
 builder.Services.AddHostedService<SP500Service>();
+builder.Services.AddSingleton<ISP500Service>(sp =>
+    sp.GetRequiredService<SP500Service>());
 
 builder.Services.AddHttpClient<BiduStockService>();
 builder.Services.AddHostedService<BiduStockService>();
