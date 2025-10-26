@@ -1,3 +1,4 @@
+
 using Microsoft.Extensions.Options;
 using YieldView.API.Configurations;
 using YieldView.API.Data;
@@ -6,8 +7,8 @@ using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class PlugStockService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser, ILogger<PlugStockService> logger)
-  : BackgroundService, IPlugStockService
+public class GrossDomesticProductService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, IGDPParser gdpParser, ILogger<GrossDomesticProductService> logger)
+  : BackgroundService, IGrossDomesticProductService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
   protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -15,32 +16,32 @@ public class PlugStockService(IHttpClientFactory httpClientFactory, IOptions<Yie
     using var scope = scopeFactory.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
 
-    if (!sources.TryGetValue("PLUG.US", out var sp500Source))
+    if (!sources.TryGetValue("GDP", out var gdpSource))
     {
-      logger.LogError("No PLUG source configured.");
+      logger.LogError("No GDP source configured.");
       return;
     }
 
     var httpClient = httpClientFactory.CreateClient("default");
-    var fetchInterval = DataFetchHelper.GetDelayForInterval(sp500Source.FetchInterval);
-    var url = $"{sp500Source.BaseUrl}";
+    var fetchInterval = DataFetchHelper.GetDelayForInterval(gdpSource.FetchInterval);
+    var url = $"{gdpSource.BaseUrl}";
 
     while (!cancellationToken.IsCancellationRequested)
     {
-      dbContext.PlugPrices.RemoveRange(dbContext.PlugPrices);
+      dbContext.GDPPrices.RemoveRange(dbContext.GDPPrices);
       await dbContext.SaveChangesAsync(cancellationToken);
 
       string? csv = await httpClient.GetStringAsync(url, cancellationToken);
 
       if (string.IsNullOrEmpty(csv))
       {
-        throw new InvalidOperationException("No PLUG data fetched");
+        throw new InvalidOperationException("No Bidu data fetched");
       }
 
-      dbContext.PlugPrices.AddRange(stockParser.Parse<PlugStockPrice>(csv));
+      dbContext.GDPPrices.AddRange(gdpParser.Parse<GDPPrice>(csv));
 
       await dbContext.SaveChangesAsync(cancellationToken);
-      logger.LogInformation("finished loading PLUG data!");
+      logger.LogInformation("finished loading BIDU data!");
 
       await Task.Delay(fetchInterval, cancellationToken);
     }

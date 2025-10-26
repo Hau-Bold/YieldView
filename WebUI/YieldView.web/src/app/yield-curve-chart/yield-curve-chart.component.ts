@@ -11,6 +11,11 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { SP500Service } from '../services/sp500.service';
 import { forkJoin } from 'rxjs';
 import { SP500PriceWithVolatility } from '../Modules/SP500PriceWithVolatility';
+import { FredService } from '../services/yieldCurve/fred.service';
+import { GPSPrice } from '../Modules/GPSPrice';
+import { toISOString } from '../Utils/DateHelper';
+import { Wilshire5000Price } from '../Modules/Wilshire5000Price';
+import { BuffetIndicator } from '../Modules/BuffetIndicator';
 
 Chart.register(...registerables);
 
@@ -34,33 +39,70 @@ export class YieldCurveChartComponent implements OnInit {
   @Input() country = 'US';
   maturityOrder:string[] = ["1M", "1_5M",  "2M", "3M", "4M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"];
   date: string;
-  yieldCurveChart: any;
+ 
+  // value of dropdown for yieldcurve or fred
+  selectedDataset: string = 'yieldCurve';
 
+  // #region states for SP500 Chart
   sp500FromDate:string;
   sp500ToDate:string;
+  sp500CurveChart: any;
+  // #endregion
+  
+  // #region states for Yield Curve Chart
+  yieldCurveDate: string;
   volatilityWindowSize: number = 10; 
   volatilityThreshold: number = 0.0011;
-  sp500CurveChart: any;
+  yieldCurveChart: any;
+  // #endregion
+
+  // #region states for FRED
+  selectedFredIndicator: string = 'gdp';
+  fredFromDate: string = '1947-1-1';
+  fredToDate: string = '';
+  fredCurveChart: any;
+  // #endregion
   
-  constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service)
+  constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service, private fredService: FredService)
   {
     const today = new Date();
-    this.date =   today.toISOString().split('T')[0]; 
+    this.date = toISOString(today); 
+
+    this.yieldCurveDate = this.date;
 
     this.sp500ToDate = this.date; 
-    this.sp500FromDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0]; 
+    this.sp500FromDate = toISOString(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate())); 
+
+    this.fredToDate = this.date; 
+    this.fredFromDate =toISOString(new Date(1947, 1, 1)); 
   }
 
   ngOnInit(): void {
-    this.loadDataAndRenderChart(this.date);
+    this.loadYieldCurveChart(this.country,this.date);
     this.loadSp500Chart();
   }
 
   // #region Chart Event Handlers
+  onDatasetChange(event: Event): void {
+  const target = event.target as HTMLSelectElement;
+  this.selectedDataset = target.value;
+ 
+  if (this.selectedDataset === 'yieldCurve') {
+    this.loadYieldCurveChart(this.country,this.date);
+
+    return;
+  }
+
+  if(this.selectedDataset==='fred') 
+  {
+    this.loadFredData();
+    return;
+  }
+}
     onDateChange(event: Event):void {
     const target = event.target as HTMLInputElement;
     this.date = target.value;
-    this.loadDataAndRenderChart(this.date);
+    this.loadYieldCurveChart(this.country,this.date);
   }
 
   onSp500FromDateChange(event: Event): void {
@@ -86,10 +128,37 @@ export class YieldCurveChartComponent implements OnInit {
   this.volatilityThreshold = Number(target.value);
   this.loadSp500Chart();
 }
+
+onFredIndicatorChange(event: Event): void {
+  const target = event.target as HTMLSelectElement;
+  this.selectedFredIndicator = target.value;
+
+  this.loadFredData();
+}
+
+onFredFromDateChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  this.fredFromDate = target.value;
+  this.loadFredData();
+}
+
+onFredToDateChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  this.fredToDate = target.value;
+   this.loadFredData();
+}
+
+onYieldCurveDateChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  this.date = target.value;          
+  this.yieldCurveDate = target.value; 
+  this.loadYieldCurveChart(this.country,this.date);
+}
+
 // #endregion
 
-  loadDataAndRenderChart(date: string) {
-    this.yieldCurveService.getYieldCurve(this.country, date).subscribe(data => {
+  loadYieldCurveChart(country:string,date: string) {
+    this.yieldCurveService.getYieldCurve(country, date).subscribe(data => {
       const sortedData = data.sort(
         (a, b) => this.maturityOrder.indexOf(a.maturity) - this.maturityOrder.indexOf(b.maturity)
       );
@@ -148,17 +217,15 @@ forkJoin({
   spreads:this.yieldCurveService.getYieldCurveSpread(this.sp500FromDate,this.sp500ToDate, this.country)
 })
 .subscribe(({sp500,spreads}) => {
-
-  
   const sp500Labels: string[] = sp500.map(d => d.date.split('T')[0]);
   const sp500Prices: number[] = sp500.map(d => d.close);
   const sp500Vols: number[] = sp500.map(d => d.volatility);
   const sp500Data = sp500;
 
-   const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
-   const spreadData: (number|null)[]  = sp500Labels.map(d => spreadMap.get(d) ?? null);
+  const spreadMap = new Map(spreads.map(s => [s.date.split('T')[0], s.spread]));
+  const spreadData: (number|null)[]  = sp500Labels.map(d => spreadMap.get(d) ?? null);
 
-    this.createSp500Chart(sp500Labels, sp500Prices,sp500Vols, spreadData, sp500Data);
+  this.createSp500Chart(sp500Labels, sp500Prices,sp500Vols, spreadData, sp500Data);
 
 })
 }
@@ -204,7 +271,8 @@ createSp500Chart(sp500Labels: string[], sp500Prices: number[], sp500Vols: number
         }
     ]
     },
-    options: {
+    options:
+    {
       responsive: true,
       interaction: {
           mode: 'index',
@@ -255,24 +323,178 @@ createSp500Chart(sp500Labels: string[], sp500Prices: number[], sp500Vols: number
           ticks: { maxTicksLimit: 10 } 
         }
       },
-      onClick: (evt: any, elements: any[]) => {
-  if (elements.length > 0) {
-    const index = elements[0].index;
-    const selectedDate = sp500Labels[index];
+      onClick: (evt: any, elements: any[]) => 
+        {
+               if (elements.length > 0)
+               {
+                 const index = elements[0].index;
+                 const selectedDate = sp500Labels[index];
 
-    const formattedDate = selectedDate.split('T')[0];
+                 const formattedDate = selectedDate.split('T')[0];
 
-    this.date = formattedDate;
-
-    const datePicker = document.getElementById('yieldCurveDatePicker') as HTMLInputElement;
-    if (datePicker) {
-      datePicker.value = formattedDate;
+                 if (this.selectedDataset !== 'yieldCurve')
+                 {
+                  this.selectedDataset = 'yieldCurve';
+                 }
+               
+                 this.yieldCurveDate = selectedDate;
+               
+                 this.date = formattedDate;
+               
+                 const datePicker = document.getElementById('yieldCurveDatePicker') as HTMLInputElement;
+                 if (datePicker) {
+                   datePicker.value = formattedDate;
+                 }
+               
+                 this.loadYieldCurveChart(this.country,formattedDate);
+               }
+          }
     }
-
-    this.loadDataAndRenderChart(formattedDate);
-  }
+  });
 }
 
+loadFredData() {
+  // TODO: why is the chart always redered?
+  console.log(`Loading FRED data for ${this.selectedFredIndicator} from ${this.fredFromDate} to ${this.fredToDate}`);
+
+   if (this.fredCurveChart) {
+    this.fredCurveChart.destroy();
+  }
+
+  if(this.selectedFredIndicator==='gdp')
+  {
+    this.fredService.getGDPPrices(this.fredFromDate, this.fredToDate)
+      .subscribe(data => {
+        console.log('FRED GDP data received:', data);
+        this.renderGDPChart(data);
+      });
+      return;
+   }
+   else if(this.selectedFredIndicator==='wilshire5000')
+   {
+ this.fredService.getW5000Prices(this.fredFromDate, this.fredToDate)
+      .subscribe(data => {
+        this.renderW5000Chart(data);
+      });
+   }
+  else if(this.selectedFredIndicator==='buffett')
+   {
+     this.fredService.getBuffetIndicatorPrices(this.fredFromDate, this.fredToDate)
+      .subscribe(data => {
+        this.renderBuffetIndicatorChart(data);
+      });
+   }
+}
+
+renderGDPChart(data: GPSPrice[]) {
+  const labels = data.map(d => d.date.split('T')[0]);
+  const values = data.map(d => d.value);
+
+  const ctx = document.getElementById('fredChart') as HTMLCanvasElement;
+
+  this.fredCurveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: `${this.selectedFredIndicator.toUpperCase()}`,
+        data: values,
+        borderColor: 'orange',
+        fill: false,
+        tension: 0.2,
+        pointRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: { title: { display: true, text: 'Value' } },
+         x: {
+          type: 'time',
+          time: { unit: 'week', tooltipFormat: 'yyyy-MM-dd' },
+          ticks: { source: 'auto', maxTicksLimit: 10 },
+          title: { display: true, text: 'Date' }
+        }
+      }
+    }
+  });
+}
+
+renderW5000Chart(data: Wilshire5000Price[]) {
+  const labels = data.map(d => d.date.split('T')[0]);
+  const values = data.map(d => d.value);
+
+  const ctx = document.getElementById('fredChart') as HTMLCanvasElement;
+ 
+  if (this.fredCurveChart) {
+    this.fredCurveChart.destroy();
+  }
+
+  this.fredCurveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: `${this.selectedFredIndicator.toUpperCase()}`,
+        data: values,
+        borderColor: '#8A2BE2',
+        fill: false,
+        tension: 0.2,
+        pointRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: { title: { display: true, text: 'Value' } },
+         x: {
+          type: 'time',
+          time: { unit: 'week', tooltipFormat: 'yyyy-MM-dd' },
+          ticks: { source: 'auto', maxTicksLimit: 10 },
+          title: { display: true, text: 'Date' }
+        }
+      }
+    }
+  });
+}
+
+renderBuffetIndicatorChart(data: BuffetIndicator[]) {
+  const labels = data.map(d => d.date.split('T')[0]);
+  const values = data.map(d => d.value);
+
+  const ctx = document.getElementById('fredChart') as HTMLCanvasElement;
+
+  if (this.fredCurveChart) {
+    this.fredCurveChart.destroy();
+  }
+
+  this.fredCurveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: `${this.selectedFredIndicator.toUpperCase()}`,
+        data: values,
+        borderColor: '#FFD700',
+        fill: false,
+        tension: 0.2,
+        pointRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: { title: { display: true, text: 'Value' } },
+         x: {
+          type: 'time',
+          time: { unit: 'week', tooltipFormat: 'yyyy-MM-dd' },
+          ticks: { source: 'auto', maxTicksLimit: 10 },
+          title: { display: true, text: 'Date' }
+        }
+      }
     }
   });
 }

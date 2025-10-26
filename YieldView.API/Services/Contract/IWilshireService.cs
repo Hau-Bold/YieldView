@@ -1,5 +1,5 @@
 namespace YieldView.API.Services.Contract;
 
-public interface ITreasuryXmlService
+public interface IWilshireService
 {
 }

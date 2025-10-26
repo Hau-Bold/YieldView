@@ -3,9 +3,9 @@ using YieldView.API.Data;
 using YieldView.API.Models;
 using YieldView.API.Services.Contract;
 
-namespace YieldView.API.Services.Impl;
+namespace YieldView.API.Services.Impl.Providers;
 
-public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataProvider
+public class SP500DataProvider(IServiceScopeFactory scopeFactory) : ISP500DataProvider
 {
   public async Task<List<SP500Price>> GetHistoricalPricesAsync(DateTime from, DateTime to)
   {
@@ -18,30 +18,30 @@ public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataPro
                           .ToListAsync();
   }
 
-    /// <inheritdoc />  
-    public async Task<List<SP500PriceWithVolatility>> GetHistoricalPricesWithVolatilityAsync(DateTime from, DateTime to, int windowSize)
+  /// <inheritdoc />  
+  public async Task<List<SP500PriceWithVolatility>> GetHistoricalPricesWithVolatilityAsync(DateTime from, DateTime to, int windowSize)
+  {
+    using var scope = scopeFactory.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
+
+    var prices = await dbContext.SP500Prices
+        .Where(p => p.Date >= from && p.Date <= to)
+        .OrderBy(p => p.Date)
+        .ToListAsync();
+
+    List<double> returns = GetReturns(prices);
+
+    var result = new List<SP500PriceWithVolatility>();
+
+    for (int i = 0; i < prices.Count; i++)
     {
-        using var scope = scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
+      var volatility = CalculateVolatility(returns, i, windowSize);
 
-        var prices = await dbContext.SP500Prices
-            .Where(p => p.Date >= from && p.Date <= to)
-            .OrderBy(p => p.Date)
-            .ToListAsync();
-
-        List<double> returns = GetReturns(prices);
-
-        var result = new List<SP500PriceWithVolatility>();
-
-        for (int i = 0; i < prices.Count; i++)
-        {
-            var volatility = CalculateVolatility(returns, i, windowSize);
-
-            result.Add(new SP500PriceWithVolatility(prices[i].Date,prices[i].Close,volatility));
-        }
-
-        return result;
+      result.Add(new SP500PriceWithVolatility(prices[i].Date, prices[i].Close, volatility));
     }
+
+    return result;
+  }
 
   private static double? CalculateVolatility(List<double> returns, int currentIndex, int dataInterval)
   {
@@ -53,7 +53,7 @@ public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataPro
     var windowReturns = returns.Skip(currentIndex - dataInterval).Take(dataInterval).ToList();
     double mean = windowReturns.Average();
     double variance = windowReturns.Sum(r => Math.Pow(r - mean, 2));
-    variance /= (dataInterval - 1); 
+    variance /= dataInterval - 1;
     return Math.Sqrt(variance);
   }
 
@@ -62,7 +62,7 @@ public class SP500DataProvider(IServiceScopeFactory scopeFactory): ISP500DataPro
     var returns = new List<double>();
     for (int i = 1; i < prices.Count; i++)
     {
-      double ret = (prices[i].Close - prices[i - 1].Close) / prices[i-1].Close;
+      double ret = (prices[i].Close - prices[i - 1].Close) / prices[i - 1].Close;
       returns.Add(ret);
     }
 

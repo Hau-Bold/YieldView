@@ -14,4 +14,8 @@ public class YieldDbContext(DbContextOptions<YieldDbContext> options) : DbContex
       public DbSet<BiduStockPrice> BiduPrices { get; set; }
 
       public DbSet<PlugStockPrice> PlugPrices { get; set; }
+
+      public DbSet<GDPPrice> GDPPrices { get; set; }
+
+      public DbSet<WilshirePrice> WilshirePrices { get; set; }
 }

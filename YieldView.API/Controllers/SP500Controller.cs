@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using YieldView.API.Models;
-using YieldView.API.Services.Impl;
+using YieldView.API.Services.Impl.Providers;
 
 namespace YieldView.API.Controllers;
 

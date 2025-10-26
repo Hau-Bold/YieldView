@@ -15,11 +15,10 @@
       <ul class="flex flex-col lg:flex-row list-none ml-auto">
         <li class="nav-item">
           <a class="px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75" routerLink="">
-            <i class="fab fa-facebook-square text-lg leading-lg text-white opacity-75"></i>
             <span class="ml-2">Home</span>
           </a>
         </li>
-         <li class="nav-item">
+        <li class="nav-item">
           <a class="px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75" routerLink="/stockChart">
             <span class="ml-2">Stock Chart</span>
           </a>
@@ -29,79 +28,136 @@
   </div>
 </nav>
 
-<!-- Charts Layout -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-  <!-- Yield Curve Card -->
-  <div class="bg-white rounded-2xl shadow-lg p-6">
-    <h2 class="text-xl font-bold mb-4 text-gray-700">Yield Curve</h2>
+<!-- Main Layout -->
+<div class="p-6 space-y-6">
 
-    <!-- Date Picker -->
-    <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-600 mb-1">Select Date</label>
-      <input
-        id="yieldCurveDatePicker"
-        type="date"
-        [(ngModel)]="date"
-        (change)="onDateChange($event)"
-        class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+  <!-- Main Grid: 2 Columns -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Left Column: YieldCurve or FRED Data -->
+    <div class="bg-white rounded-2xl shadow-lg p-6">
+
+      <!-- Header + Dataset Dropdown inline -->
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-700">
+          {{ selectedDataset === 'yieldCurve' ? 'Yield Curve' : 'FRED Data' }}
+        </h2>
+
+        <select
+          [(ngModel)]="selectedDataset"
+          (change)="onDatasetChange($event)"
+          class="border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="yieldCurve">Yield Curve</option>
+          <option value="fred">FRED Data</option>
+        </select>
+      </div>
+
+      <!-- Yield Curve Content -->
+      <div *ngIf="selectedDataset === 'yieldCurve'">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-600 mb-1">Select Date</label>
+          <input
+            type="date"
+            [(ngModel)]="yieldCurveDate"
+            (change)="onYieldCurveDateChange($event)"
+            class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <canvas id="yieldChart" class="w-full h-80"></canvas>
+      </div>
+
+      <!-- FRED Data Content -->
+      <div *ngIf="selectedDataset === 'fred'">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-600 mb-1">Select Indicator</label>
+          <select
+            [(ngModel)]="selectedFredIndicator"
+            (change)="onFredIndicatorChange($event)"
+            class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="gdp">Gross Domestic Product (GDP)</option>
+            <option value="wilshire5000">Wilshire 5000</option>
+            <option value="buffett">Buffett Indicator</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">From</label>
+            <input
+              type="date"
+              [(ngModel)]="fredFromDate"
+              (change)="onFredFromDateChange($event)"
+              class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">To</label>
+            <input
+              type="date"
+              [(ngModel)]="fredToDate"
+              (change)="onFredToDateChange($event)"
+              class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        </div>
+
+        <canvas id="fredChart" class="w-full h-80"></canvas>
+      </div>
+
     </div>
 
-    <!-- Chart -->
-    <canvas id="yieldChart" class="w-full h-80"></canvas>
-  </div>
+    <!-- Right Column: SP500 Chart -->
+    <div class="bg-white rounded-2xl shadow-lg p-6">
+      <h2 class="text-xl font-bold mb-4 text-gray-700">S&P 500</h2>
 
-  <!-- SP500 Card -->
-  <div class="bg-white rounded-2xl shadow-lg p-6">
-    <h2 class="text-xl font-bold mb-4 text-gray-700">S&P 500</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">From</label>
+          <input
+            type="date"
+            [value]="sp500FromDate"
+            (change)="onSp500FromDateChange($event)"
+            class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">To</label>
+          <input
+            type="date"
+            [value]="sp500ToDate"
+            (change)="onSp500ToDateChange($event)"
+            class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+        </div>
+      </div>
 
-    <!-- Date Range Picker -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">From</label>
-        <input
-          type="date"
-          [value]="sp500FromDate"
-          (change)="onSp500FromDateChange($event)"
-          class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Volatility Window (days)</label>
+          <input
+            type="number"
+            min="1"
+            [value]="volatilityWindowSize"
+            (change)="onVolatilityWindowSizeChange($event)"
+            class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Volatility Threshold</label>
+          <input
+            type="number"
+            step="0.1"
+            [value]="volatilityThreshold"
+            (change)="onVolatilityThresholdChange($event)"
+            class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+        </div>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">To</label>
-        <input
-          type="date"
-          [value]="sp500ToDate"
-          (change)="onSp500ToDateChange($event)"
-          class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-      </div>
+
+      <canvas id="sp500Chart" class="w-full h-80"></canvas>
     </div>
 
-    <!-- Chart -->
-    <canvas id="sp500Chart" class="w-full h-80"></canvas>
-
-    <!-- Volatility Controls -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">Volatility Window (days)</label>
-        <input
-          type="number"
-          min="1"
-          [value]="volatilityWindowSize"
-          (change)="onVolatilityWindowSizeChange($event)"
-          class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">Volatility Threshold</label>
-        <input
-          type="number"
-          step="0.1"
-          [value]="volatilityThreshold"
-          (change)="onVolatilityThresholdChange($event)"
-          class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-      </div>
-    </div>
   </div>
 </div>

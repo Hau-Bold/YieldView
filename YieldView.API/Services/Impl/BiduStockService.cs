@@ -7,8 +7,8 @@ using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class BiduStockService(HttpClient httpClient, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser,ILogger<BiduStockService>logger)
-  : BackgroundService
+public class BiduStockService(IHttpClientFactory httpClientFactory, IOptions<YieldCurveSourcesConfig> options, IServiceScopeFactory scopeFactory, ICSVStockParser stockParser, ILogger<BiduStockService> logger)
+  : BackgroundService, IBiduStockService
 {
   private readonly YieldCurveSourcesConfig sources = options.Value;
   protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -22,12 +22,13 @@ public class BiduStockService(HttpClient httpClient, IOptions<YieldCurveSourcesC
       return;
     }
 
+    var httpClient = httpClientFactory.CreateClient("default");
     var fetchInterval = DataFetchHelper.GetDelayForInterval(sp500Source.FetchInterval);
     var url = $"{sp500Source.BaseUrl}";
 
     while (!cancellationToken.IsCancellationRequested)
     {
-        dbContext.BiduPrices.RemoveRange(dbContext.BiduPrices);
+      dbContext.BiduPrices.RemoveRange(dbContext.BiduPrices);
       await dbContext.SaveChangesAsync(cancellationToken);
 
       string? csv = await httpClient.GetStringAsync(url, cancellationToken);

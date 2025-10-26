@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using YieldView.API.Data;
 using YieldView.API.Models;
-using YieldView.API.Services.Impl;
+using YieldView.API.Services.Impl.Providers;
 
 namespace YieldView.API.Controllers;
 

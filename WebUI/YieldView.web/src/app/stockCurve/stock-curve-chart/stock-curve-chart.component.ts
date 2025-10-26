@@ -11,6 +11,7 @@ import { StockPrice } from '../../Modules/StockPrice';
 import 'chartjs-chart-financial';
 import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
 import 'chartjs-adapter-date-fns'; 
+import { toISOString } from '../../Utils/DateHelper';
 
 Chart.register(...registerables, CandlestickController, CandlestickElement);
 
@@ -35,8 +36,8 @@ export class StockCurveChartComponent implements OnInit {
 
   constructor(private stockService: StockService, private plateauService: PlateauService) {
     const today = new Date();
-    this.to = today.toISOString().split('T')[0];
-    this.from = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+    this.to = toISOString(today);
+    this.from = toISOString(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
     this.selectedStock = 'bidu';
   }
 

@@ -5,7 +5,14 @@ VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YieldView.API", "YieldView.API\YieldView.API.csproj", "{114F9B7A-F3AB-47DB-A410-F32E0DE03C60}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YieldView.Test.Int", "YieldView.Test.Int\YieldView.Test.Int.csproj", "{A294E54B-71E2-4A97-8635-60B4528A04B3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YieldView.API.Test.Int", "YieldView.Test.Int\YieldView.API.Test.Int.csproj", "{A294E54B-71E2-4A97-8635-60B4528A04B3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YieldView.API.Test.sdk", "YieldView.Test.sdk\YieldView.API.Test.sdk.csproj", "{86893FC1-4AE3-46D7-9B1B-1A651BB0BB4E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8971D240-8114-4B53-8956-9E54F2F64540}"
+	ProjectSection(SolutionItems) = preProject
+		YieldView.runsettings = YieldView.runsettings
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +28,10 @@ Global
 		{A294E54B-71E2-4A97-8635-60B4528A04B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A294E54B-71E2-4A97-8635-60B4528A04B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A294E54B-71E2-4A97-8635-60B4528A04B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86893FC1-4AE3-46D7-9B1B-1A651BB0BB4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86893FC1-4AE3-46D7-9B1B-1A651BB0BB4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86893FC1-4AE3-46D7-9B1B-1A651BB0BB4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86893FC1-4AE3-46D7-9B1B-1A651BB0BB4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

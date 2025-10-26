@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using YieldView.API.Data;
 using YieldView.API.Models;
 
-namespace YieldView.API.Services.Impl;
+namespace YieldView.API.Services.Impl.Providers;
 
 public class StockDataProvider(IServiceScopeFactory scopeFactory)
 {
@@ -27,7 +27,7 @@ public class StockDataProvider(IServiceScopeFactory scopeFactory)
 
   private static async Task<List<StockPrice>> GetStockPricesAsync(DateTime from, DateTime to, IQueryable<StockPrice> dbStockPrices)
   {
-    var stockData= await dbStockPrices.Where(p => p.Date >= from && p.Date <= to)
+    var stockData = await dbStockPrices.Where(p => p.Date >= from && p.Date <= to)
                       .OrderBy(p => p.Date)
                       .ToListAsync();
 
@@ -35,15 +35,15 @@ public class StockDataProvider(IServiceScopeFactory scopeFactory)
     double averageClose = 0;
     int plateauIndex = 0;
     int localGaussian = 0;
-    for (int i=0;i< stockData.Count;i++)
+    for (int i = 0; i < stockData.Count; i++)
     {
       var current = stockData[i];
-      
+
       averageClose += current.Close;
       current.AveragedClose = averageClose / (i + 1);
       var currentGaussian = (int)Math.Round(current.AveragedClose);
 
-      if(localGaussian != currentGaussian)
+      if (localGaussian != currentGaussian)
       {
         localGaussian = currentGaussian;
         plateauIndex++;
