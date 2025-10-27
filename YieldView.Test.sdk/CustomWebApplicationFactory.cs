@@ -14,22 +14,19 @@ namespace YieldView.API.Test.sdk;
 internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
   private readonly Mock<ISP500Service> sP500Service;
-  private readonly Mock<IPlugStockService> plugStockService;
-  private readonly Mock<IBiduStockService> biduStockService;
+  private readonly Mock<IStockService> biduStockService;
   private readonly Mock<IWilshireService> wilshireService;
   private readonly Mock<IGrossDomesticProductService> grossDomesticProductService;
   private readonly Mock<ITreasuryXmlService> treasuryXmlService;
 
   public CustomWebApplicationFactory(Mock<ISP500Service>? sP500Service = null,
-                                     Mock<IPlugStockService>? plugStockService = null,
-                                     Mock<IBiduStockService>? biduStockService = null,
+                                     Mock<IStockService>? biduStockService = null,
                                      Mock<IWilshireService>? wilshireService = null,
                                      Mock<IGrossDomesticProductService>? grossDomesticProductService = null,
                                      Mock<ITreasuryXmlService>? treasuryXmlService = null)
   {
     this.sP500Service = sP500Service ?? new Mock<ISP500Service>();
-    this.plugStockService = plugStockService ?? new Mock<IPlugStockService>();
-    this.biduStockService = biduStockService ?? new Mock<IBiduStockService>();
+    this.biduStockService = biduStockService ?? new Mock<IStockService>();
     this.wilshireService = wilshireService ?? new Mock<IWilshireService>();
     this.grossDomesticProductService = grossDomesticProductService ?? new Mock<IGrossDomesticProductService>();
     this.treasuryXmlService = treasuryXmlService ?? new Mock<ITreasuryXmlService>();
@@ -93,7 +90,6 @@ internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
       ctx.Database.EnsureCreated();
 
       services.AddSingleton(sP500Service.Object);
-      services.AddSingleton(plugStockService.Object);
       services.AddSingleton(biduStockService.Object);
       services.AddSingleton(wilshireService.Object);
       services.AddSingleton(grossDomesticProductService.Object);

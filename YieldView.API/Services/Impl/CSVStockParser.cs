@@ -4,7 +4,7 @@ using YieldView.API.Services.Contract;
 
 namespace YieldView.API.Services.Impl;
 
-public class CSVStockParser: ICSVStockParser
+public class CSVStockParser : ICSVStockParser
 {
   public List<T> Parse<T>(string csv) where T : StockPrice, new()
   {
@@ -30,7 +30,7 @@ public class CSVStockParser: ICSVStockParser
           )
       {
 
-        T res = new ()
+        T res = new()
         {
           Date = date,
           Open = open,

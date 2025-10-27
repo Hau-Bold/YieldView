@@ -49,8 +49,7 @@ builder.Services.AddTransient<IWilshireParser, WilshireParser>();
 
 builder.Services.AddBackgroundServiceWithInterface<TreasuryXmlService, ITreasuryXmlService>();
 builder.Services.AddBackgroundServiceWithInterface<SP500Service, ISP500Service>();
-builder.Services.AddBackgroundServiceWithInterface<BiduStockService, IBiduStockService>();
-builder.Services.AddBackgroundServiceWithInterface<PlugStockService, IPlugStockService>();
+builder.Services.AddBackgroundServiceWithInterface<StockService, IStockService>();
 builder.Services.AddBackgroundServiceWithInterface<WilshireService, IWilshireService>();
 builder.Services.AddBackgroundServiceWithInterface<GrossDomesticProductService, IGrossDomesticProductService>();
 

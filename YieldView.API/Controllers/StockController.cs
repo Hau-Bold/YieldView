@@ -43,4 +43,22 @@ public class StockController(StockDataProvider dataProvider) : Controller
 
     return Ok(prices);
   }
+
+  [HttpGet("porscheag")]
+  public async Task<ActionResult<IEnumerable<StockPrice>>> GetPorscheAg([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+  {
+    if (from == null || to == null)
+    {
+      return BadRequest("Please provide both from and to dates.");
+    }
+
+    var prices = await dataProvider.GetPorscheAGStockPricesAsync(from.Value, to.Value);
+
+    if (prices.Count == 0)
+    {
+      return NotFound("No prices found in the given date range.");
+    }
+
+    return Ok(prices);
+  }
 }
