@@ -24,6 +24,15 @@ public class StockDataProvider(IServiceScopeFactory scopeFactory)
     return await GetStockPricesAsync(from, to, plugPrices);
   }
 
+  public async Task<List<StockPrice>> GetPorscheAGStockPricesAsync(DateTime from, DateTime to)
+  {
+    using var scope = scopeFactory.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<YieldDbContext>();
+    var porscheAGPrices = dbContext.PorscheAGPrices.AsQueryable();
+
+    return await GetStockPricesAsync(from, to, porscheAGPrices);
+  }
+
 
   private static async Task<List<StockPrice>> GetStockPricesAsync(DateTime from, DateTime to, IQueryable<StockPrice> dbStockPrices)
   {
