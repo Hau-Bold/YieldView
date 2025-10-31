@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.CodeAnalysis;
 using YieldView.API.Models;
 using YieldView.API.Services.Impl.Providers;
 
@@ -11,7 +12,7 @@ public class StockController(StockDataProvider dataProvider) : Controller
   [HttpGet("bidu")]
   public async Task<ActionResult<IEnumerable<StockPrice>>> GetBidu([FromQuery] DateTime? from, [FromQuery] DateTime? to)
   {
-    if (from == null || to == null)
+    if (AreInputDatesValid(from, to) == false)
     {
       return BadRequest("Please provide both from and to dates.");
     }
@@ -29,7 +30,7 @@ public class StockController(StockDataProvider dataProvider) : Controller
   [HttpGet("plug.us")]
   public async Task<ActionResult<IEnumerable<StockPrice>>> GetPlug([FromQuery] DateTime? from, [FromQuery] DateTime? to)
   {
-    if (from == null || to == null)
+    if (AreInputDatesValid(from, to) == false)
     {
       return BadRequest("Please provide both from and to dates.");
     }
@@ -47,7 +48,7 @@ public class StockController(StockDataProvider dataProvider) : Controller
   [HttpGet("porscheag")]
   public async Task<ActionResult<IEnumerable<StockPrice>>> GetPorscheAg([FromQuery] DateTime? from, [FromQuery] DateTime? to)
   {
-    if (from == null || to == null)
+    if (AreInputDatesValid(from, to) == false)
     {
       return BadRequest("Please provide both from and to dates.");
     }
@@ -60,5 +61,10 @@ public class StockController(StockDataProvider dataProvider) : Controller
     }
 
     return Ok(prices);
+  }
+
+  private static bool AreInputDatesValid([NotNullWhen(true)] DateTime? from, [NotNullWhen(true)] DateTime? to)
+  {
+    return from.HasValue && to.HasValue && from.Value.CompareTo(to.Value) < 0;
   }
 }
