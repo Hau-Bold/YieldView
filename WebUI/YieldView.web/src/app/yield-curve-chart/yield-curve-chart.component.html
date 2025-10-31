@@ -73,7 +73,7 @@
           <label class="block text-sm font-medium text-gray-600 mb-1">Select Indicator</label>
           <select
             [(ngModel)]="selectedFredIndicator"
-            (change)="onFredIndicatorChange($event)"
+            (change)="onFredFilterChange('indicator',$event)"
             class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option value="gdp">Gross Domestic Product (GDP)</option>
@@ -88,7 +88,7 @@
             <input
               type="date"
               [(ngModel)]="fredFromDate"
-              (change)="onFredFromDateChange($event)"
+              (change)="onFredFilterChange('from', $event)"
               class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
@@ -97,7 +97,7 @@
             <input
               type="date"
               [(ngModel)]="fredToDate"
-              (change)="onFredToDateChange($event)"
+              (change)="onFredFilterChange('to', $event)"
               class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
@@ -118,7 +118,7 @@
           <input
             type="date"
             [value]="sp500FromDate"
-            (change)="onSp500FromDateChange($event)"
+            (change)="onSp500FilterChange('from', $event)"
             class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
@@ -127,7 +127,7 @@
           <input
             type="date"
             [value]="sp500ToDate"
-            (change)="onSp500ToDateChange($event)"
+            (change)="onSp500FilterChange('to', $event)"
             class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
@@ -140,7 +140,7 @@
             type="number"
             min="1"
             [value]="volatilityWindowSize"
-            (change)="onVolatilityWindowSizeChange($event)"
+            (change)="onSp500FilterChange('volatility',$event)"
             class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
@@ -150,7 +150,7 @@
             type="number"
             step="0.1"
             [value]="volatilityThreshold"
-            (change)="onVolatilityThresholdChange($event)"
+            (change)="onSp500FilterChange('treshold', $event)"
             class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>

@@ -46,5 +46,4 @@ public class CSVStockParser : ICSVStockParser
 
     return prices;
   }
-
 }
