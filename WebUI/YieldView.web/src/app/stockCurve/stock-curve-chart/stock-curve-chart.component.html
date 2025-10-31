@@ -72,6 +72,8 @@
   <div>
     <label class="block text-sm font-medium text-gray-600 mb-1">Period</label>
     <select
+     [(ngModel)]="selectedPeriod"
+      (ngModelChange)="onStockFilterChange('period', $event)"
       class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500">
       <option value="week">1 Week</option>
       <option value="month">1 Month</option>
@@ -83,7 +85,10 @@
    <!-- Frequency Dropdown -->
   <div>
     <label class="block text-sm font-medium text-gray-600 mb-1">Frequency</label>
-    <select class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500">
+    <select
+      [(ngModel)]="selectedFrequency"
+      (ngModelChange)="onStockFilterChange('frequency', $event)"
+     class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-green-500">
       <option value="daily">Daily</option>
       <option value="weekly">Weekly</option>
       <option value="monthly">Monthly</option>

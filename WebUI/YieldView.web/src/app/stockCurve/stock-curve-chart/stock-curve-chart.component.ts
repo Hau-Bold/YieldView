@@ -33,6 +33,8 @@ export class StockCurveChartComponent implements OnInit {
   minPlateauLength = 5;
   showCandels = false;
   showVolumes = false;
+  selectedPeriod: 'week' | 'month' | 'year' | '10years' = 'year';
+  selectedFrequency: 'daily' | 'weekly' | 'monthly' = 'daily';
 
   constructor(private stockService: StockService, private plateauService: PlateauService) {
     const today = new Date();
@@ -72,7 +74,51 @@ export class StockCurveChartComponent implements OnInit {
 
          this.loadAndRenderStockCurveChart(this.selectedStock,this.from,this.to); 
         } 
-  // #endregion
+
+onStockFilterChange(source: 'period' | 'frequency', value: string): void {
+
+  switch (source) {
+    case 'period':
+      this.handlePeriod(value);
+      break;
+
+    case 'frequency':
+      this.selectedFrequency = value as 'daily' | 'weekly' | 'monthly';
+      break;
+  }
+
+  this.loadAndRenderStockCurveChart(this.selectedStock, this.from, this.to);
+}
+
+
+private handlePeriod(value: string): void {
+  const now = new Date();
+  const from = new Date();
+
+  switch (value) {
+    case '10years':
+      from.setFullYear(now.getFullYear() - 10);
+      break;
+    case 'year':
+      from.setFullYear(now.getFullYear() - 1);
+      break;
+    case 'month':
+      from.setMonth(now.getMonth() - 1);
+      break;
+    case 'week':
+      from.setDate(now.getDate() - 7);
+      break;
+  }
+
+  this.from = from.toISOString().split('T')[0];
+  this.to = now.toISOString().split('T')[0];
+
+  this.selectedPeriod = value as 'week' | 'month' | 'year' | '10years';
+}
+
+
+
+        // #endregion
 
  public toggleAveragedMean(): void {
     this.showAveragedMean = !this.showAveragedMean;

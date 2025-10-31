@@ -61,8 +61,6 @@ export class YieldCurveChartComponent implements OnInit {
   fredFromDate: string = '1947-1-1';
   fredToDate: string = '';
   fredCurveChart: any;
-  selectedPeriod: 'week' | 'month' | 'year' | '10years' = 'month';
-  selectedFrequency: 'daily' | 'weekly' | 'monthly' = 'daily';
   // #endregion
   
 
