@@ -63,6 +63,8 @@ export class YieldCurveChartComponent implements OnInit {
   fredCurveChart: any;
   // #endregion
   
+
+
   constructor(private yieldCurveService: YieldCurveService, private sp500Service: SP500Service, private fredService: FredService)
   {
     const today = new Date();
@@ -105,47 +107,50 @@ export class YieldCurveChartComponent implements OnInit {
     this.loadYieldCurveChart(this.country,this.date);
   }
 
-  onSp500FromDateChange(event: Event): void {
-  const target = event.target as HTMLInputElement;
-  this.sp500FromDate = target.value;
-  this.loadSp500Chart();
- }
+onSp500FilterChange(source: 'from' | 'to' | 'volatility' | 'treshold' ,event: Event): void {
+     const target = event.target as HTMLInputElement;
+     const value = target.value;
 
-  onSp500ToDateChange(event: Event): void {
-  const target = event.target as HTMLInputElement;
-  this.sp500ToDate = target.value;
-  this.loadSp500Chart();
-}
-
-  onVolatilityWindowSizeChange(event: Event): void {
-  const target = event.target as HTMLInputElement;
-  this.volatilityWindowSize = Number(target.value);
-  this.loadSp500Chart();
+  switch (source) {
+    case 'from':
+      this.sp500FromDate = value;
+      break;
+    case 'to':
+      this.sp500ToDate = value;
+      break;
+    case 'volatility':
+       this.volatilityWindowSize = Number(target.value);
+    break
+    case 'treshold':
+       this.volatilityThreshold = Number(target.value);
+    break
   }
 
-  onVolatilityThresholdChange(event: Event): void {
-  const target = event.target as HTMLInputElement;
-  this.volatilityThreshold = Number(target.value);
-  this.loadSp500Chart();
+  if (source === 'from' || source === 'to' || source === 'volatility' || source === 'treshold') {
+    this.loadSp500Chart();
+  }
 }
 
-onFredIndicatorChange(event: Event): void {
-  const target = event.target as HTMLSelectElement;
-  this.selectedFredIndicator = target.value;
+onFredFilterChange(source: 'from' | 'to' | 'indicator', event: Event): void {
 
-  this.loadFredData();
-}
-
-onFredFromDateChange(event: Event): void {
   const target = event.target as HTMLInputElement;
-  this.fredFromDate = target.value;
-  this.loadFredData();
-}
+  const value = target.value;
 
-onFredToDateChange(event: Event): void {
-  const target = event.target as HTMLInputElement;
-  this.fredToDate = target.value;
-   this.loadFredData();
+  switch (source) {
+    case 'from':
+      this.fredFromDate = value;
+      break;
+    case 'to':
+      this.fredToDate = value;
+      break;
+    case 'indicator':
+      this.selectedFredIndicator = value;
+      break;
+  }
+
+  if (source === 'from' || source === 'to' || source === 'indicator') {
+    this.loadFredData();
+  }
 }
 
 onYieldCurveDateChange(event: Event): void {
