@@ -11,7 +11,8 @@ import { StockPrice } from '../../Modules/StockPrice';
 import 'chartjs-chart-financial';
 import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
 import 'chartjs-adapter-date-fns'; 
-import { toISOString } from '../../Utils/DateHelper';
+import { groupCandlesByMonth, groupCandlesByYear, toISOString, getIsoWeekNumber } from '../../Utils/DateHelper';
+import { Candle } from '../../Modules/Candle';
 
 Chart.register(...registerables, CandlestickController, CandlestickElement);
 
@@ -48,47 +49,47 @@ export class StockCurveChartComponent implements OnInit {
   }
 
   // #region Chart Event Handlers
-   onDateFromChange(event: Event): void {
-     const target = event.target as HTMLInputElement;
-        this.from = target.value; 
-        this.loadAndRenderStockCurveChart(this.selectedStock,this.from,this.to);
-     } 
-     
-     onDateToChange(event: Event): void { 
-      const target = event.target as HTMLInputElement; 
-      this.to = target.value; console.log(`To date changed to ${this.to}`);
-      this.loadAndRenderStockCurveChart(this.selectedStock,this.from,this.to); 
-    }
-
-    onMinPlateauLengthChange(event: Event): void {
+   onMinPlateauLengthChange(event: Event): void {
       const target = event.target as HTMLInputElement;
       this.minPlateauLength = parseInt(target.value, 10) || 5;
       this.loadAndRenderStockCurveChart(this.selectedStock,this.from,this.to);
     }
 
-    onStockChange(event: Event):void {
-       const target = event.target as HTMLInputElement;
-        this.selectedStock = target.value;
+   onDateFilterChange(source: 'from'| 'to',event: Event): void {
+     const target = event.target as HTMLInputElement; 
 
-        console.log(`Stock changed to ${this.selectedStock}`);
+    switch(source)
+    {
+      case 'from':
+         this.from = target.value;
+         break;
+       case 'to':
+         this.to = target.value;
+         break;
+    }
 
-         this.loadAndRenderStockCurveChart(this.selectedStock,this.from,this.to); 
-        } 
+    this.loadAndRenderStockCurveChart(this.selectedStock,this.from,this.to);
+} 
 
-onStockFilterChange(source: 'period' | 'frequency', value: string): void {
 
-  switch (source) {
-    case 'period':
-      this.handlePeriod(value);
-      break;
+  onStockFilterChange(source: 'period' | 'frequency' | 'stock' , value: string): void {
 
-    case 'frequency':
-      this.selectedFrequency = value as 'daily' | 'weekly' | 'monthly';
-      break;
+    switch (source) {
+      case 'period':
+        this.handlePeriod(value);
+        break;
+
+      case 'frequency':
+        this.selectedFrequency = value as 'daily' | 'weekly' | 'monthly';
+        break;
+
+      case 'stock':
+        this.selectedStock = value;
+        break;
+    }
+
+    this.loadAndRenderStockCurveChart(this.selectedStock, this.from, this.to);
   }
-
-  this.loadAndRenderStockCurveChart(this.selectedStock, this.from, this.to);
-}
 
 
 private handlePeriod(value: string): void {
@@ -115,10 +116,7 @@ private handlePeriod(value: string): void {
 
   this.selectedPeriod = value as 'week' | 'month' | 'year' | '10years';
 }
-
-
-
-        // #endregion
+// #endregion
 
  public toggleAveragedMean(): void {
     this.showAveragedMean = !this.showAveragedMean;
@@ -168,13 +166,8 @@ private handlePeriod(value: string): void {
       plateauDatasets = this.createPlateauDatasets( plateaus);
     }
 
-    const candles = data.map(d => ( {
-      x: new Date(d.date),
-      o: d.open,
-      h: d.high,
-      l: d.low,
-      c: d.close } ));
-
+    const candles = this.aggregateFrequency(data, this.selectedFrequency);
+   
     this.createStockChart(prices, volumes, averagedData, plateauDatasets, candles);
   });
 }
@@ -184,7 +177,7 @@ private createStockChart(
   volumes: { x: Date; y: number }[],
   averagedData: { x: Date; y: number }[],
   plateauDatasets: any[],
-  candles: {x:Date,o:number,h:number,l:number,c:number}[]
+  candles:Candle[]
 ) {
   if (this.stockCurveChart) {
     this.stockCurveChart.destroy();
@@ -255,5 +248,100 @@ private createPlateauDatasets(plateaus: Plateau[]) {
   }));
 }
 
- 
+
+private aggregateFrequency(data: StockPrice[], selectedFrequency: string): Candle[] {
+
+   const candles: Candle[] = data.map(d => ({
+    x: new Date(d.date),
+    o: d.open,
+    h: d.high,
+    l: d.low,
+    c: d.close
+  }));
+
+ switch (selectedFrequency) {
+  case 'daily':
+     return candles
+
+  case 'weekly':
+    return this.handleWeeklyFrequency(candles);
+
+  case 'monthly':
+   return this.handleMonthlyFrequency(candles);
+
+  default:
+    throw new Error(`Unsupported frequency: ${selectedFrequency}`);
+ }
 }
+
+private handleWeeklyFrequency(candles: Candle[]): Candle[] {
+  const groupedByYear = groupCandlesByYear(candles);
+  const groupedByMonth = groupCandlesByMonth(groupedByYear);
+
+  const result: Candle[] = [];
+
+  for (const [year, months] of Object.entries(groupedByMonth)) {
+    for (const [month, monthCandles] of Object.entries(months)) {
+      if (monthCandles.length === 0)
+        {
+           continue;
+        }
+
+      const sorted = monthCandles.sort((a, b) => a.x.getTime() - b.x.getTime());
+
+      const groupedWeeks: Record<number, Candle[]> = {};
+
+      for (const c of sorted) {
+        const week = getIsoWeekNumber(c.x);
+        if (!groupedWeeks[week]) groupedWeeks[week] = [];
+        groupedWeeks[week].push(c);
+      }
+
+      for (const [week, weekCandles] of Object.entries(groupedWeeks)) {
+        if (weekCandles.length === 0) continue;
+
+        const sortedWeek = weekCandles.sort((a, b) => a.x.getTime() - b.x.getTime());
+        result.push({
+          x: sortedWeek[sortedWeek.length - 1].x, 
+          o: sortedWeek[0].o,                     
+          h: Math.max(...sortedWeek.map(c => c.h)),
+          l: Math.min(...sortedWeek.map(c => c.l)),
+          c: sortedWeek[sortedWeek.length - 1].c 
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+
+private handleMonthlyFrequency(candles: Candle[]): Candle[] {
+  const groupedByYear = groupCandlesByYear(candles);
+  const groupedByMonth = groupCandlesByMonth(groupedByYear);
+
+  const result: Candle[] = [];
+
+  for (const [year, months] of Object.entries(groupedByMonth)) {
+    for (const [month, monthCandles] of Object.entries(months)) {
+      if (monthCandles.length === 0)
+        {
+           continue;
+        }
+
+      const sorted = monthCandles.sort((a, b) => a.x.getTime() - b.x.getTime());
+
+      result.push({
+        x: sorted[sorted.length - 1].x, 
+        o: sorted[0].o,                 
+        h: Math.max(...sorted.map(c => c.h)),
+        l: Math.min(...sorted.map(c => c.l)),
+        c: sorted[sorted.length - 1].c 
+      });
+    }
+  }
+
+  return result;
+}
+}
+
