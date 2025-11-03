@@ -189,6 +189,24 @@ public class StockController(StockDataProvider dataProvider) : Controller
     return Ok(prices);
   }
 
+  [HttpGet("pfizer")]
+  public async Task<ActionResult<IEnumerable<StockPrice>>> GetPfizer([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+  {
+    if (AreInputDatesValid(from, to) == false)
+    {
+      return BadRequest("Please provide both from and to dates.");
+    }
+
+    var prices = await dataProvider.GetPfizerPricesAsync(from.Value, to.Value);
+
+    if (prices.Count == 0)
+    {
+      return NotFound("No prices found in the given date range.");
+    }
+
+    return Ok(prices);
+  }
+
   private static bool AreInputDatesValid([NotNullWhen(true)] DateTime? from, [NotNullWhen(true)] DateTime? to)
   {
     return from.HasValue && to.HasValue && from.Value.CompareTo(to.Value) < 0;

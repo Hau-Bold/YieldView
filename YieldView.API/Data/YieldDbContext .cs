@@ -33,4 +33,5 @@ public class YieldDbContext(DbContextOptions<YieldDbContext> options) : DbContex
 
   public DbSet<DowIncStockPrice> DowIncPrices { get; set; }
   public DbSet<RheinmetallStockPrice> RheinmetallPrices { get; set; }
+  public DbSet<PfizerStockPrice> PfizerPrices { get; set; }
 }

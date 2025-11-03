@@ -33,6 +33,7 @@ public class StockService(IHttpClientFactory httpClientFactory, IOptions<YieldCu
       await HandleSource<EastmanChemicalStockPrice>("EastmanChemical", dbContext, httpClient, cancellationToken);
       await HandleSource<DowIncStockPrice>("DowInc", dbContext, httpClient, cancellationToken);
       await HandleSource<RheinmetallStockPrice>("Rheinmetall", dbContext, httpClient, cancellationToken);
+      await HandleSource<PfizerStockPrice>("Pfizer", dbContext, httpClient, cancellationToken);
 
       await Task.Delay(fetchInterval, cancellationToken);
     }

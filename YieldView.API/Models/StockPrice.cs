@@ -36,3 +36,4 @@ public class LyondellBasellStockPrice : StockPrice { }
 public class EastmanChemicalStockPrice : StockPrice { }
 public class DowIncStockPrice : StockPrice { }
 public class RheinmetallStockPrice : StockPrice { }
+public class PfizerStockPrice : StockPrice { }
