@@ -23,15 +23,23 @@ public class StockService(IHttpClientFactory httpClientFactory, IOptions<YieldCu
       dbContext.BiduPrices.RemoveRange(dbContext.BiduPrices);
       await dbContext.SaveChangesAsync(cancellationToken);
 
-      await HandleSource<BiduStockPrice>(cancellationToken, "Bidu", dbContext, httpClient);
-      await HandleSource<PlugStockPrice>(cancellationToken, "PLUG.US", dbContext, httpClient);
-      await HandleSource<PorscheAGStockPrice>(cancellationToken, "PorscheAG", dbContext, httpClient);
+      await HandleSource<BiduStockPrice>("Bidu", dbContext, httpClient, cancellationToken);
+      await HandleSource<PlugStockPrice>("PLUG.US", dbContext, httpClient, cancellationToken);
+      await HandleSource<PorscheAGStockPrice>("PorscheAG", dbContext, httpClient, cancellationToken);
+      await HandleSource<AlibabaStockPrice>("Alibaba", dbContext, httpClient, cancellationToken);
+      await HandleSource<ConstellationBrandsStockPrice>("ConstellationBrands", dbContext, httpClient, cancellationToken);
+      await HandleSource<KenvueStockPrice>("Kenvue", dbContext, httpClient, cancellationToken);
+      await HandleSource<LyondellBasellStockPrice>("LyondellBasell", dbContext, httpClient, cancellationToken);
+      await HandleSource<EastmanChemicalStockPrice>("EastmanChemical", dbContext, httpClient, cancellationToken);
+      await HandleSource<DowIncStockPrice>("DowInc", dbContext, httpClient, cancellationToken);
+      await HandleSource<RheinmetallStockPrice>("Rheinmetall", dbContext, httpClient, cancellationToken);
+      await HandleSource<PfizerStockPrice>("Pfizer", dbContext, httpClient, cancellationToken);
 
       await Task.Delay(fetchInterval, cancellationToken);
     }
   }
 
-  private async Task HandleSource<TEntity>(CancellationToken cancellationToken, string stockName, YieldDbContext dbContext, HttpClient httpClient)
+  private async Task HandleSource<TEntity>(string stockName, YieldDbContext dbContext, HttpClient httpClient, CancellationToken cancellationToken)
     where TEntity : StockPrice, new()
   {
     if (!sources.TryGetValue(stockName, out var stockSource))
