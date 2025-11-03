@@ -20,4 +20,17 @@ public class YieldDbContext(DbContextOptions<YieldDbContext> options) : DbContex
   public DbSet<GDPPrice> GDPPrices { get; set; }
 
   public DbSet<WilshirePrice> WilshirePrices { get; set; }
+
+  public DbSet<AlibabaStockPrice> AlibabaPrices { get; set; }
+
+  public DbSet<ConstellationBrandsStockPrice> ConstellationBrandsPrices { get; set; }
+
+  public DbSet<KenvueStockPrice> KenvuePrices { get; set; }
+
+  public DbSet<LyondellBasellStockPrice> LyondellBasellPrices { get; set; }
+
+  public DbSet<EastmanChemicalStockPrice> EastmanChemicalPrices { get; set; }
+
+  public DbSet<DowIncStockPrice> DowIncPrices { get; set; }
+  public DbSet<RheinmetallStockPrice> RheinmetallPrices { get; set; }
 }

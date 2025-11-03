@@ -28,3 +28,11 @@ public class BiduStockPrice : StockPrice { }
 
 public class PlugStockPrice : StockPrice { }
 public class PorscheAGStockPrice : StockPrice { }
+
+public class AlibabaStockPrice : StockPrice { }
+public class ConstellationBrandsStockPrice : StockPrice { }
+public class KenvueStockPrice : StockPrice { }
+public class LyondellBasellStockPrice : StockPrice { }
+public class EastmanChemicalStockPrice : StockPrice { }
+public class DowIncStockPrice : StockPrice { }
+public class RheinmetallStockPrice : StockPrice { }
