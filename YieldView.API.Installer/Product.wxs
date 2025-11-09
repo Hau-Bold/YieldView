@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <?define Product_Name = "YieldView.API.Installer"?>
+  <?define Version = "1.0.0.0"?>
+  <?define Upgrade_Code="DAC55BDB-249E-46BA-A9BD-7CD2DC389D40"?>
+
+  <Package 
+    Name="$(var.Product_Name)"
+    Language="1033"
+    Version="$(var.Version)"
+    Manufacturer="Parme Project"
+    UpgradeCode="$(var.Upgrade_Code)"
+    InstallerVersion="500"
+    Compressed="yes">
+
+    <SummaryInformation Description="$(var.Product_Name) Windows installer package" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of $(var.Product_Name) is already installed" />
+    <Media Id="1" Cabinet="Cabinet_Service.cab" EmbedCab="yes" />
+
+    <!-- Directory structure under Desktop -->
+    <StandardDirectory Id="DesktopFolder">
+      <Directory Id="YIELDVIEW_DESKTOP_DIR" Name="YieldView">
+        <Directory Id="DEPLOYMENT_DIR" Name="DeploymentFolder">
+          <Directory Id="BINARIES_DIR" Name="Binaries" />
+          <Directory Id="CONFIGFILES_DIR" Name="ConfigFiles" />
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <ComponentGroup Id="ProductComponents">
+
+      <!-- Binaries -->
+      <Component Id="YieldViewBinaries" Guid="E21A5C33-4590-4B63-B1CC-7D7CE817D222" Directory="BINARIES_DIR">
+        <!-- Registry KeyPath satisfies ICE38 -->
+        <RegistryValue Root="HKCU" Key="Software\YieldView" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+
+		<File Source="$(var.PublishDir)\*" />
+        <!-- <File Id="ExeFile" Source="$(var.PublishDir)\YieldView.API.exe" /> -->
+        <!-- <File Id="DllFile" Source="$(var.PublishDir)\YieldView.API.dll" /> -->
+		<!-- <File Id="Microsoft.Extensions.Hosting.dll" Source="$(var.PublishDir)\Microsoft.Extensions.Hosting.dll" /> -->
+        <!-- <File Id="RuntimeConfig" Source="$(var.PublishDir)\YieldView.API.runtimeconfig.json" /> -->
+
+        <!-- Ensures cleanup (ICE64) -->
+		<RemoveFolder Id="DeleteDesktopDir" Directory="YIELDVIEW_DESKTOP_DIR" On="uninstall" />
+        <RemoveFolder Id="DeleteDeploymentDir" Directory="DEPLOYMENT_DIR" On="uninstall" />
+        <RemoveFolder Id="DeleteBinariesDir" Directory="BINARIES_DIR" On="uninstall" />
+        <RemoveFolder Id="DeleteConfigDir" Directory="CONFIGFILES_DIR" On="uninstall" />
+
+      </Component>
+
+      <!-- Config files -->
+      <Component Id="YieldViewConfigs" Guid="C12A7D50-8A2B-4A1E-9BB4-64C9C8F5F1C9" Directory="CONFIGFILES_DIR">
+        <RegistryValue Root="HKCU" Key="Software\YieldView" Name="ConfigInstalled" Type="integer" Value="1" KeyPath="yes" />
+        <File Id="AppSettings" Source="$(var.PublishDir)\appsettings.json" />
+        <RemoveFile Id="RemoveConfigs" Name="*.*" On="uninstall" />
+      </Component>
+
+    </ComponentGroup>
+
+    <Feature Id="ProductFeature" Title="YieldViewInstaller" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+
+  </Package>
+</Wix>

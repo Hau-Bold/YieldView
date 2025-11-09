@@ -8,7 +8,7 @@ using YieldView.API.Services.Impl;
 using YieldView.API.Services.Impl.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddWindowsService();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
