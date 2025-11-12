@@ -1,24 +1,18 @@
 <Project Sdk="WixToolset.Sdk/4.0.6" ToolsVersion="4.0">
   <PropertyGroup>
-    <!-- The WiX project outputs a .msi installer -->
     <OutputType>Package</OutputType>
-    <!-- Framework used only if custom actions or code are added -->
     <TargetFramework>net8.0</TargetFramework>
-    <!-- Directory where dotnet publish will place the output -->
+    <!-- Paths -->
     <PublishDir>$(MSBuildProjectDirectory)\..\publish\win</PublishDir>
-    <!-- Makes PublishDir available as $(var.PublishDir) inside .wxs files -->
-    <DefineConstants>PublishDir=$(PublishDir)</DefineConstants>
+    <BuildOutputDir>$(MSBuildProjectDirectory)\..\YieldView.API\bin\Release\net8.0</BuildOutputDir>
+    <!-- Pass constants into .wxs -->
+    <DefineConstants>PublishDir=$(PublishDir);BuildOutputDir=$(BuildOutputDir)</DefineConstants>
     <ProjectGuid>{d8283449-d186-4dc1-a560-41e383ad0158}</ProjectGuid>
   </PropertyGroup>
-  <!-- Pre-build step: publish the backend before WiX compiles the MSI -->
-  <Target Name="PublishBackend" BeforeTargets="Build">
-    <!-- Optional message for build logs -->
-    <Message Text="Publishing YieldView.API before building the MSI..." Importance="high" />
-    <!-- Execute dotnet publish to generate a self-contained executable -->
-    <Exec Command="dotnet publish ..\YieldView.API\YieldView.API.csproj -c Release -r win-x64 --self-contained true -o $(PublishDir)" />
-    <PropertyGroup>
-      <PublishDir>..\YieldView.API\bin\Release\net8.0\win-x64\publish</PublishDir>
-    </PropertyGroup>
-    
+  <!-- This target *does* run before WiX's compilation -->
+  <Target Name="RunDotnetPublish" BeforeTargets="PrepareForBuild">
+    <Message Text="Running dotnet publish for YieldView.API..." Importance="high" />
+    <Exec Command="dotnet publish &quot;..\YieldView.API\YieldView.API.csproj&quot; -c Release -r win-x64 --self-contained true -o &quot;$(PublishDir)&quot;" ContinueOnError="false" />
+    <Message Text="Publish completed. Output in $(PublishDir)" Importance="high" />
   </Target>
 </Project>
