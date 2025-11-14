@@ -19,6 +19,7 @@ WebUI/YieldView.web/.history/*
 # C# backend
 bin/
 obj/
+publish/
 .vs/
 *.user
 *.suo
