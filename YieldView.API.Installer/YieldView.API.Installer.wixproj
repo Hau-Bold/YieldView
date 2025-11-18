@@ -1,18 +1,37 @@
 <Project Sdk="WixToolset.Sdk/4.0.6" ToolsVersion="4.0">
+
   <PropertyGroup>
     <OutputType>Package</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <!-- Paths -->
+
+    <!-- Windows paths -->
     <PublishDir>$(MSBuildProjectDirectory)\..\publish\win</PublishDir>
     <BuildOutputDir>$(MSBuildProjectDirectory)\..\YieldView.API\bin\Release\net8.0</BuildOutputDir>
+
+    <!-- Linux paths -->
+    <LinuxPublishDir>$(MSBuildProjectDirectory)\..\publish\linux</LinuxPublishDir>
+
     <!-- Pass constants into .wxs -->
     <DefineConstants>PublishDir=$(PublishDir);BuildOutputDir=$(BuildOutputDir)</DefineConstants>
     <ProjectGuid>{d8283449-d186-4dc1-a560-41e383ad0158}</ProjectGuid>
   </PropertyGroup>
-  <!-- This target *does* run before WiX's compilation -->
+
+  <!-- Windows publish step -->
   <Target Name="RunDotnetPublish" BeforeTargets="PrepareForBuild">
-    <Message Text="Running dotnet publish for YieldView.API..." Importance="high" />
-    <Exec Command="dotnet publish &quot;..\YieldView.API\YieldView.API.csproj&quot; -c Release -r win-x64 --self-contained true -o &quot;$(PublishDir)&quot;" ContinueOnError="false" />
-    <Message Text="Publish completed. Output in $(PublishDir)" Importance="high" />
+    <Message Text="Running dotnet publish for YieldView.API (Windows)..." Importance="high" />
+    <Exec Command="dotnet publish &quot;..\YieldView.API\YieldView.API.csproj&quot; -c Release -r win-x64 --self-contained true -o &quot;$(PublishDir)&quot;" />
+    <Message Text="Windows publish completed." Importance="high" />
   </Target>
+
+  <!-- Linux publish step -->
+  <Target Name="RunDotnetPublishLinux" AfterTargets="RunDotnetPublish">
+    <Message Text="Running dotnet publish for YieldView.API (Linux)..." Importance="high" />
+    <Exec Command="dotnet publish &quot;..\YieldView.API\YieldView.API.csproj&quot; -c Release -r linux-x64 --self-contained true -o &quot;$(LinuxPublishDir)&quot;" />
+    <Message Text="Linux publish completed." Importance="high" />
+
+    <!-- Create tar.gz -->
+    <Exec Command="tar -czf &quot;$(LinuxPublishDir)\YieldView-Ubuntu.tar.gz&quot; -C &quot;$(LinuxPublishDir)&quot; ." />
+    <Message Text="Created Linux deployment package: $(LinuxPublishDir)\YieldView-Ubuntu.tar.gz" Importance="high" />
+  </Target>
+
 </Project>
