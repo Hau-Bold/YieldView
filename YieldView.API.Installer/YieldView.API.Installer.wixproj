@@ -34,4 +34,10 @@
     <Message Text="Created Linux deployment package: $(LinuxPublishDir)\YieldView-Ubuntu.tar.gz" Importance="high" />
   </Target>
 
+  <Target Name="CopyArtifactsToRelease" AfterTargets="Build">
+    <Message Text="Copying artifacts to Release folder..." Importance="high" />
+    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\Scripts\MoveArtifactsToRelease.ps1&quot;" />
+    <Message Text="Artifacts copied to Release folder: $(ReleaseFolder)" Importance="high" />
+  </Target>
+
 </Project>

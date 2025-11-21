@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -19,6 +19,25 @@
     <InternalsVisibleTo Include="$(AssemblyName).Test.Int" />
     <InternalsVisibleTo Include="$(AssemblyName).Test.sdk" />
     <InternalsVisibleTo Include="YieldView.Test.sdk" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+    <Content Include="certificates\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Users\user\source\repos\YieldView\YieldView.API\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\Users\user\source\repos\YieldView\YieldView.API\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Release\Linux\" />
+    <Folder Include="Release\Windows\" />
   </ItemGroup>
 
 </Project>
